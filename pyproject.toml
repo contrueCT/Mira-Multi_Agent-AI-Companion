@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "emotional-companion"
+version = "0.1.0"
+description = "基于AutoGen和ChromaDB的情感陪伴智能体"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "contrueCT"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pyautogen>=0.2.0",
+    "chromadb>=0.4.17",
+    "sentence-transformers>=2.2.2",
+    "schedule>=1.2.0",
+    "pyfiglet>=0.8.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "pytest",
+]
+
+[project.scripts]
+companion = "emotional_companion.cli:main"
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+
+[tool.isort]
+profile = "black"
