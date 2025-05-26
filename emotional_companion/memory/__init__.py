@@ -1,6 +1,6 @@
 """
 情感记忆模块
 """
-from emotional_companion.memory.emotional_memory import EmotionalMemory
+from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 
-__all__ = ['EmotionalMemory']
+__all__ = ['EmotionalMemorySystem']
