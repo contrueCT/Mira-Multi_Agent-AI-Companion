@@ -6,7 +6,7 @@ import threading
 import schedule
 import time
 import os
-from ..memory.emotional_memory import EmotionalMemorySystem
+from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 
 class EmotionalAgentSystem:
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):

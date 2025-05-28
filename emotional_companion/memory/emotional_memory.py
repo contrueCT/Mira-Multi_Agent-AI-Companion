@@ -5,6 +5,7 @@ from datetime import datetime
 import os
 import random
 import numpy as np
+from chromadb.utils import embedding_functions
 
 class EmotionalMemorySystem:
     def __init__(self, persist_directory="memory_db"):
@@ -16,15 +17,26 @@ class EmotionalMemorySystem:
         
         # 初始化ChromaDB
         self.client = chromadb.PersistentClient(path=persist_directory)
+
+        sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name='paraphrase-multilingual-MiniLM-L12-v2'
+        )
+    
         
         # 创建不同类型的记忆集合
         self.collections = {
-            "episodic": self.client.get_or_create_collection("episodic_memory"),
-            "semantic": self.client.get_or_create_collection("semantic_memory"),
-            "emotional": self.client.get_or_create_collection("emotional_memory"),
-            "relationship": self.client.get_or_create_collection("relationship_memory"),
-            "preferences": self.client.get_or_create_collection("preferences_memory")
+            "episodic": self.client.get_or_create_collection("episodic_memory", 
+                                                            embedding_function=sentence_transformer_ef),
+            "semantic": self.client.get_or_create_collection("semantic_memory", 
+                                                            embedding_function=sentence_transformer_ef),
+            "emotional": self.client.get_or_create_collection("emotional_memory", 
+                                                            embedding_function=sentence_transformer_ef),
+            "relationship": self.client.get_or_create_collection("relationship_memory", 
+                                                            embedding_function=sentence_transformer_ef),
+            "preferences": self.client.get_or_create_collection("preferences_memory", 
+                                                            embedding_function=sentence_transformer_ef)
         }
+
         
         # 记忆衰减参数
         self.decay_rate = 0.05
@@ -39,16 +51,12 @@ class EmotionalMemorySystem:
             "last_updated": datetime.now().isoformat()
         }
         self.load_emotional_state()
-    
-    def embed_text(self, text):
-        """生成文本嵌入向量"""
-        return self.embedding_model.encode(text).tolist()
-    
+
     def load_emotional_state(self):
         """加载最近的情感状态"""
         try:
             results = self.collections["emotional"].query(
-                query_embeddings=[self.embed_text("current emotional state")],
+                query_texts=["current emotional state"],
                 n_results=1
             )
             if results and len(results["metadatas"]) > 0:
@@ -67,7 +75,6 @@ class EmotionalMemorySystem:
         
         self.collections["emotional"].add(
             ids=[state_id],
-            embeddings=[self.embed_text(state_text)],
             metadatas=[{"state_data": json.dumps(self.emotional_state)}],
             documents=[state_text]
         )
@@ -102,7 +109,6 @@ class EmotionalMemorySystem:
         # 保存到ChromaDB
         self.collections["episodic"].add(
             ids=[memory_id],
-            embeddings=[self.embed_text(memory_text)],
             metadatas=[metadata],
             documents=[memory_text]
         )
@@ -124,7 +130,6 @@ class EmotionalMemorySystem:
         # 保存事件
         self.collections["relationship"].add(
             ids=[event_id],
-            embeddings=[self.embed_text(event_description)],
             metadatas=[{
                 "timestamp": timestamp,
                 "type": "relationship_event",
@@ -144,16 +149,15 @@ class EmotionalMemorySystem:
         
         # 查询是否已存在相同偏好
         existing = self.collections["preferences"].query(
-            query_embeddings=[self.embed_text(f"{category} {item}")],
+            query_texts=[f"{category} {item}"],
             n_results=1,
             where={"category": category}
         )
         
         # 如果存在且确定性较高，则更新
-        if existing and len(existing["ids"]) > 0 and certainty > 0.7:
+        if existing and len(existing["ids"]) > 0 and len(existing["ids"][0]) > 0 and certainty > 0.7:
             self.collections["preferences"].update(
-                ids=[existing["ids"][0]],
-                embeddings=[self.embed_text(preference_text)],
+                ids=[existing["ids"][0][0]],
                 metadatas=[{
                     "category": category,
                     "item": item,
@@ -168,7 +172,6 @@ class EmotionalMemorySystem:
             # 否则添加新偏好
             self.collections["preferences"].add(
                 ids=[preference_id],
-                embeddings=[self.embed_text(preference_text)],
                 metadatas=[{
                     "category": category,
                     "item": item,
@@ -215,11 +218,10 @@ class EmotionalMemorySystem:
     def semantic_memory_search(self, query, collection_name="episodic", n_results=5, 
                               where_filter=None, threshold=0.6):
         """语义记忆搜索"""
-        query_embedding = self.embed_text(query)
         
         # 查询参数
         search_params = {
-            "query_embeddings": [query_embedding],
+            "query_texts": [query],#注意这里
             "n_results": n_results
         }
         
@@ -421,7 +423,7 @@ class EmotionalMemorySystem:
         
         # 如果没有情绪相关记忆，尝试检索一个随机重要记忆
         important_memories = self.collections["episodic"].query(
-            query_embeddings=[self.embed_text("important memory")],
+            query_texts=["important memory"],
             n_results=10,
             where={"importance": {"$gt": 0.7}}
         )
