@@ -2,6 +2,17 @@
 
 > **English Version Available** | [English documentation is available at the bottom of this README](#english-version)
 
+> ⚠️ **重要警告 / Important Warning** ⚠️
+> 
+> **本项目目前处于非常早期的开发阶段，尚未经过充分测试，不具备稳定运行的条件。**
+> 
+> - 🚧 **开发阶段**: 这是一个概念验证版本，功能可能不完整或存在问题
+> - ⚡ **未经测试**: 代码未经过全面的单元测试和集成测试
+> - 🔧 **配置复杂**: 可能需要额外的调试和配置才能正常运行
+> - 📊 **实验性质**: 部分功能可能无法按预期工作
+> 
+> **请仅用于研究和学习目的，不建议在生产环境中使用。**
+
 一个温暖而智慧的 AI 伙伴，基于 AutoGen 和 ChromaDB 精心构建。小梦不仅能记住您的每一次交流，还会像真正的朋友一样与您建立深度情感连接，陪伴您度过生活中的每一个时刻。
 
 ## ✨ 核心特性
@@ -14,6 +25,8 @@
 - **💭 自然联想** - 如同人类的思维方式，小梦会在对话中自然地联想到过往的美好回忆
 
 ## 📦 快速开始
+
+> ⚠️ **开发状态提醒**: 由于项目仍在早期开发阶段，以下安装步骤可能无法保证正常运行。建议开发者在尝试之前先了解项目的当前限制。
 
 ### 使用 UV 安装（推荐）
 
@@ -85,6 +98,8 @@ COMPANION_NAME=小梦
 
 ## 🚀 开始使用
 
+> ⚠️ **运行警告**: 由于项目处于早期开发阶段，以下启动命令可能无法正常工作或产生预期结果。如遇到问题，请查看项目的 Issues 页面或联系开发者。
+
 ### 启动小梦
 
 ```bash
@@ -99,6 +114,8 @@ companion
 ```
 
 ### 使用体验
+
+**注意**: 以下描述的功能代表项目的设计目标，实际运行效果可能与描述不符。
 
 启动后，小梦会主动问候并开始对话。她会：
 - 记住您的喜好和习惯（如您提到喜欢咖啡，她会记住这个细节）
@@ -281,11 +298,24 @@ emotional-companion/
 
 欢迎提交 Issue 和 Pull Request 来帮助改进小梦！
 
+**特别需要帮助的领域：**
+- 🧪 单元测试和集成测试
+- 🐛 Bug 修复和稳定性改进
+- 📚 文档完善和示例代码
+- ⚡ 性能优化和错误处理
+
 ## 💬 反馈
 
 如果您在使用过程中遇到问题或有建议，请随时创建 Issue 或联系开发者。
 
+**已知问题和限制：**
+- 项目可能无法按预期启动或运行
+- 某些功能可能尚未实现或存在缺陷
+- 配置可能需要额外的调试和修改
+
 ---
+
+> ⚠️ **免责声明**: 本项目目前为早期开发版本，所有功能和特性描述仅代表开发目标，实际实现可能存在差异。使用者需要具备一定的技术能力来解决可能遇到的问题。
 
 **小梦正在等待与您的第一次对话，开始一段特别的友谊之旅吧！** ✨
 
@@ -294,6 +324,17 @@ emotional-companion/
 # English Version
 
 # Mira (小梦) - Emotional Companion AI
+
+> ⚠️ **Important Warning** ⚠️
+> 
+> **This project is currently in a very early development stage, has not been thoroughly tested, and is not ready for stable operation.**
+> 
+> - 🚧 **Development Stage**: This is a proof-of-concept version with potentially incomplete or problematic features
+> - ⚡ **Untested**: Code has not undergone comprehensive unit testing and integration testing
+> - 🔧 **Complex Configuration**: May require additional debugging and configuration to run properly
+> - 📊 **Experimental Nature**: Some features may not work as expected
+> 
+> **Please use for research and learning purposes only. Not recommended for production environments.**
 
 A warm and intelligent AI companion built with AutoGen and ChromaDB. Mira not only remembers every conversation but also builds deep emotional connections like a true friend, accompanying you through every moment of life.
 
@@ -307,6 +348,8 @@ A warm and intelligent AI companion built with AutoGen and ChromaDB. Mira not on
 - **💭 Natural Association** - Like human thinking patterns, Mira naturally associates with past beautiful memories during conversations
 
 ## 📦 Quick Start
+
+> ⚠️ **Development Status Reminder**: Since the project is still in early development stage, the following installation steps may not guarantee normal operation. Developers are advised to understand the current limitations of the project before attempting.
 
 ### Installation with UV (Recommended)
 
@@ -378,6 +421,8 @@ Edit the `configs/OAI_CONFIG_LIST.json` file:
 
 ## 🚀 Getting Started
 
+> ⚠️ **Runtime Warning**: Due to the project being in early development stage, the following startup commands may not work properly or produce expected results. If you encounter issues, please check the project's Issues page or contact the developer.
+
 ### Launch Mira
 
 ```bash
@@ -392,6 +437,8 @@ companion
 ```
 
 ### Conversation Experience
+
+**Note**: The following described features represent the project's design goals, and actual runtime effects may not match the descriptions.
 
 After launching, Mira will proactively greet and start conversations. She will:
 - Remember your preferences and habits (if you mention liking coffee, she'll remember this detail)
@@ -544,10 +591,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Welcome to submit Issues and Pull Requests to help improve Mira!
 
+**Areas that especially need help:**
+- 🧪 Unit testing and integration testing
+- 🐛 Bug fixes and stability improvements
+- 📚 Documentation improvements and example code
+- ⚡ Performance optimization and error handling
+
 ## 💬 Feedback
 
 If you encounter problems or have suggestions during use, please feel free to create an Issue or contact the developer.
 
+**Known Issues and Limitations:**
+- Project may not start or run as expected
+- Some features may not be implemented yet or have defects
+- Configuration may require additional debugging and modifications
+
 ---
+
+> ⚠️ **Disclaimer**: This project is currently an early development version. All feature and characteristic descriptions only represent development goals, and actual implementation may differ. Users need to have certain technical capabilities to solve problems they may encounter.
 
 **Mira is waiting for your first conversation, let's start a special journey of friendship!** ✨
