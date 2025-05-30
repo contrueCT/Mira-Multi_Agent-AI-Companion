@@ -12,29 +12,40 @@ class EmotionalMemorySystem:
         # 创建持久化目录
         os.makedirs(persist_directory, exist_ok=True)
         
-        # 初始化嵌入模型
-        self.embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-        
         # 初始化ChromaDB
         self.client = chromadb.PersistentClient(path=persist_directory)
 
-        sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name='paraphrase-multilingual-MiniLM-L12-v2'
+        self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="BAAI/bge-base-zh-v1.5",
+            device="cpu"
         )
+
+        # 定义HNSW索引参数
+        self.hnsw_metadata_config = {
+            "hnsw:space": "cosine",  # 使用余弦相似度
+            "hnsw:M": 32,            # 推荐M值
+            "hnsw:construction_ef": 256, # 推荐construction_ef值
+            "hnsw:num_threads": 4 # (可选) 如果你的CPU核心多，可以尝试指定构建线程数
+        }
     
         
         # 创建不同类型的记忆集合
         self.collections = {
-            "episodic": self.client.get_or_create_collection("episodic_memory", 
-                                                            embedding_function=sentence_transformer_ef),
-            "semantic": self.client.get_or_create_collection("semantic_memory", 
-                                                            embedding_function=sentence_transformer_ef),
-            "emotional": self.client.get_or_create_collection("emotional_memory", 
-                                                            embedding_function=sentence_transformer_ef),
-            "relationship": self.client.get_or_create_collection("relationship_memory", 
-                                                            embedding_function=sentence_transformer_ef),
-            "preferences": self.client.get_or_create_collection("preferences_memory", 
-                                                            embedding_function=sentence_transformer_ef)
+            "episodic": self.client.get_or_create_collection(name = "episodic_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config),
+            "semantic": self.client.get_or_create_collection(name = "semantic_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config),
+            "emotional": self.client.get_or_create_collection(name = "emotional_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config),
+            "relationship": self.client.get_or_create_collection(name = "relationship_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config),
+            "preferences": self.client.get_or_create_collection(name = "preferences_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config)
         }
 
         
@@ -60,7 +71,7 @@ class EmotionalMemorySystem:
                 n_results=1
             )
             if results and len(results["metadatas"]) > 0:
-                self.emotional_state = json.loads(results["metadatas"][0]["state_data"])
+                self.emotional_state = json.loads(results["metadatas"][0][0]["state_data"])
         except Exception as e:
             print(f"加载情感状态失败: {e}")
     
@@ -214,14 +225,12 @@ class EmotionalMemorySystem:
             self.emotional_state["valence"] = valence
             
         self.save_emotional_state()
-    
+    #此处的相关性阈值用于测试，后续需要修改
     def semantic_memory_search(self, query, collection_name="episodic", n_results=5, 
                               where_filter=None, threshold=0.6):
         """语义记忆搜索"""
-        
-        # 查询参数
         search_params = {
-            "query_texts": [query],#注意这里
+            "query_texts": [query],
             "n_results": n_results
         }
         
@@ -230,23 +239,37 @@ class EmotionalMemorySystem:
             
         results = self.collections[collection_name].query(**search_params)
         
-        # 处理结果，包括相似度过滤
         memories = []
-        if results and results["documents"]:
-            for i, doc in enumerate(results["documents"]):
-                # 如果有距离(相似度)信息
-                if "distances" in results and results["distances"] and \
-                   results["distances"][0][i] <= threshold:
+        # 检查结果的有效性，并确保所有需要的字段都存在且结构符合预期
+        if (results and results["documents"] and results["documents"][0] and
+            results["metadatas"] and results["metadatas"][0] and
+            results["ids"] and results["ids"][0] and
+            results["distances"] and results["distances"][0]):
+
+            # 因为我们只有一个查询文本 (query_texts=[query]), 所以我们只关心结果中的第一个列表
+            docs_list = results["documents"][0]
+            metadatas_list = results["metadatas"][0]
+            ids_list = results["ids"][0]
+            distances_list = results["distances"][0]
+
+            for i, doc_content in enumerate(docs_list):
+                # 确保索引 i 不会超出其他列表的范围 (尽管ChromaDB通常会返回对齐的列表)
+                if i < len(distances_list) and i < len(metadatas_list) and i < len(ids_list):
+                    distance = distances_list[i]
                     
-                    memory = {
-                        "content": doc,
-                        "metadata": results["metadatas"][0][i],
-                        "id": results["ids"][0][i],
-                        "similarity": 1 - (results["distances"][0][i] if "distances" in results else 0)
-                    }
-                    memories.append(memory)
+                    # ChromaDB返回的距离，值越小表示越相似。
+                    # threshold=0.6 意味着我们寻找与查询向量的余弦距离小于等于0.6的文档。
+                    if distance <= threshold:
+                        memory = {
+                            "content": doc_content,  # 这里是单个文档的内容
+                            "metadata": metadatas_list[i],
+                            "id": ids_list[i],
+                            # 相似度通常是 1 - distance (对于归一化的距离，如余弦距离)
+                            "similarity": 1 - distance 
+                        }
+                        memories.append(memory)
         
-        # 记录访问，更新衰减因子
+        # 记录访问，更新衰减因子 (这部分逻辑保持不变)
         for memory in memories:
             if collection_name == "episodic":
                 self.update_memory_access(memory["id"])
@@ -428,13 +451,14 @@ class EmotionalMemorySystem:
             where={"importance": {"$gt": 0.7}}
         )
         
-        if important_memories and important_memories["documents"]:
-            # 随机选择一个
-            idx = random.randint(0, len(important_memories["documents"][0])-1)
-            return {
-                "type": "spontaneous_memory",
-                "content": important_memories["documents"][0][idx],
-                "triggered_by": "重要记忆随机联想"
-            }
-        
+        if important_memories and important_memories["documents"] and important_memories["documents"][0]:
+            docs_list = important_memories["documents"][0]
+            # 检查是否有重要记忆
+            if docs_list: 
+                idx = random.randint(0, len(docs_list) - 1)
+                return {
+                    "type": "spontaneous_memory",
+                    "content": docs_list[idx],
+                    "triggered_by": "重要记忆随机联想"
+                }
         return None
