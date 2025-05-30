@@ -1,5 +1,7 @@
 import os
+import shutil
 import time
+
 from emotional_companion.memory import EmotionalMemorySystem
 
 def test_memory_system():
@@ -8,9 +10,8 @@ def test_memory_system():
     # 步骤1: 创建测试目录
     test_dir = "test_memory_db"
     if os.path.exists(test_dir):
-        print(f"使用已存在的测试数据库：{test_dir}")
-    else:
-        print(f"创建新的测试数据库：{test_dir}")
+        shutil.rmtree(test_dir)
+        print(f"移除旧的测试数据库：{test_dir}")
     
     # 步骤2: 实例化记忆系统
     try:
@@ -31,7 +32,7 @@ def test_memory_system():
             user_message="今天天气真好！",
             agent_response="是的，阳光明媚，心情舒畅！",
             user_emotion={"emotion": "happy", "valence": 0.8, "intensity": 0.7},
-            importance=0.6
+            importance=0.7
         )
         print(f"✓ 添加情节记忆成功: {memory_id}")
         
