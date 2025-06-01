@@ -315,9 +315,6 @@ class EmotionalAgentSystem:
             
             # 记录情感分析
             self.logger.step("emotion", emotion_analysis)
-            
-            # 测试输出
-            print(f"\n[情感分析] （{emotion_analysis}）")
 
             # 解析情感数据
             try:
@@ -335,9 +332,6 @@ class EmotionalAgentSystem:
             
             # 记录记忆上下文
             self.logger.step("memory", context_result)
-            
-            # 测试输出
-            print(f"\n[记忆上下文] （{context_result}）")
 
             # 3. 生成内心思考
             thought_message = TextMessage(
@@ -358,9 +352,6 @@ class EmotionalAgentSystem:
             
             # 记录内心思考
             self.logger.step("thinking", inner_thoughts)
-            
-            # 测试输出
-            print(f"\n[内心思考] （{inner_thoughts}）")
 
             # 4. 生成回复
             companion_message = TextMessage(
@@ -411,7 +402,7 @@ class EmotionalAgentSystem:
                 change = await self.memory_manager.on_messages([update_message], cancellation_token)
             
                 # 测试输出，是否更新了情感状态
-                print(f"\n[情感更新] （{change.chat_message.content if change.chat_message else '无情感更新'}）")
+                self.logger.step("emotionalchange", change.chat_message.content if change.chat_message else "无情感更新")
 
             # 打印回复
             print(f"\n[小梦] {response}")
