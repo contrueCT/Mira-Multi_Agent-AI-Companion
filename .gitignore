@@ -30,6 +30,9 @@ ENV/
 # 记忆数据库
 memory_db/
 
+# 本地对话日志
+logs/
+
 # 配置文件(包含API密钥)
 configs/OAI_CONFIG_LIST.json
 
