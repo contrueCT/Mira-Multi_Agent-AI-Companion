@@ -46,7 +46,4 @@ class SimpleLogger:
         
     def step(self, name: str, content: str):
         """记录对话步骤"""
-        # 截断过长的内容
-        if len(content) > 200:
-            content = content[:200] + "..."
         self.log(name.upper(), content)
