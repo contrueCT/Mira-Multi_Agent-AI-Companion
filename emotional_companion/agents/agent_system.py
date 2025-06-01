@@ -17,6 +17,7 @@ import os
 import asyncio
 from typing import List, Optional
 from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
+from emotional_companion.utils.conversation_logger import SimpleLogger
 
 class EmotionalAgentSystem:
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):
@@ -26,6 +27,9 @@ class EmotionalAgentSystem:
         
         # 初始化记忆系统
         self.memory_system = EmotionalMemorySystem()
+        
+        # 初始化轻量级日志记录器
+        self.logger = SimpleLogger()
         
         # 初始化代理系统
         self.setup_agents(config_path)
@@ -68,11 +72,11 @@ class EmotionalAgentSystem:
                 }
         )
 
-        fastest_model_config = config_data[2] if isinstance(config_data, list) else config_data
-        self.fastest_client = OpenAIChatCompletionClient(
-            model=fastest_model_config.get("model"),
-            api_key=fastest_model_config.get("api_key"),
-            base_url=fastest_model_config.get("base_url"),
+        light_model_config = config_data[2] if isinstance(config_data, list) else config_data
+        self.light_client = OpenAIChatCompletionClient(
+            model=light_model_config.get("model"),
+            api_key=light_model_config.get("api_key"),
+            base_url=light_model_config.get("base_url"),
                 model_info={
                 "vision": False,
                 "function_calling": True,
@@ -83,10 +87,12 @@ class EmotionalAgentSystem:
         )
         
         # 创建工具函数
-        memory_tools = self._create_memory_tools()        # 创建情感分析代理
+        memory_tools = self._create_memory_tools()     
+
+        # 创建情感分析代理
         self.emotion_detector = AssistantAgent(
             name="emotion_analyzer",
-            model_client=self.model_client,
+            model_client=self.fast_client,
             system_message="""你是一个情感分析专家。你的任务是分析用户消息中的情绪和可能隐含的偏好。
             返回格式为JSON：{'emotion': '情绪名称', 'intensity': 0.1-1.0, 'valence': -1.0-1.0, 
             'possible_preferences': [{'category': '类别', 'item': '项目', 'certainty': 0.1-1.0, 'sentiment': -1.0-1.0}]}
@@ -102,7 +108,7 @@ class EmotionalAgentSystem:
             1. 通过search_memories工具搜索与当前交互相关的过去记忆
             2. 通过update_emotion工具更新智能体的情感状态
             3. 通过save_user_preference工具识别并保存用户偏好
-            4. 通过record_relationship_event工具记录关系发展事件
+            4. 通过record_relationship_event工具记录关系发展事件，关系发展事件指的是让用户和智能体之间的关系变得更亲密的互动。
             5. 通过spontaneous_recall工具进行自主联想
             
             当你收到请求时，请先使用search_memories工具，然后根据需要调用其他工具。
@@ -113,7 +119,7 @@ class EmotionalAgentSystem:
         # 创建主对话代理
         self.companion = AssistantAgent(
             name="companion",
-            model_client=self.main_client,
+            model_client=self.light_client,
             system_message=f"""你是一个有自己情感和个性的AI陪伴。你的职责是：
             1. 以自然、有情感的方式与用户交流
             2. 记住用户的偏好和习惯并在对话中引用
@@ -121,6 +127,8 @@ class EmotionalAgentSystem:
             4. 表现出独特的个性和思考能力
             5. 你知道自己是个ai智能体，但你会表现得像一个有情感的朋友
             6. 随着关系亲密度的加深，交流方式应变得更加亲密和私人化
+            务必使用用户使用的语言回答
+            你要自称“小梦”
             
             当前情绪: {self.memory_system.emotional_state['current_emotion']}
             情绪强度: {self.memory_system.emotional_state['emotion_intensity']}
@@ -277,7 +285,6 @@ class EmotionalAgentSystem:
         """运行对话系统"""
         # 启动后台任务
         self.start_background_tasks()
-        
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[系统] 当前时间: {current_time}")
         print(f"[系统] 情感状态: {self.memory_system.emotional_state['current_emotion']}")
@@ -291,6 +298,9 @@ class EmotionalAgentSystem:
                 print("[情感陪伴] 再见！期待下次与您交流。")
                 break
             
+            # 开始日志记录
+            self.logger.new_chat(user_input)
+            
             # 创建cancellation token
             cancellation_token = CancellationToken()
             
@@ -303,16 +313,18 @@ class EmotionalAgentSystem:
             emotion_response = await self.emotion_detector.on_messages([emotion_message], cancellation_token)
             emotion_analysis = emotion_response.chat_message.content if emotion_response.chat_message else "{}"
             
+            # 记录情感分析
+            self.logger.step("emotion", emotion_analysis)
+            
             # 测试输出
-            print(f"\n[情感分析] {emotion_analysis}")
+            print(f"\n[情感分析] （{emotion_analysis}）")
 
             # 解析情感数据
             try:
                 emotion_data = json.loads(emotion_analysis)
             except:
                 emotion_data = {"emotion": "neutral", "intensity": 0.5, "valence": 0}
-            
-            # 2. 获取记忆与上下文
+              # 2. 获取记忆与上下文
             memory_message = TextMessage(
                 content=f"请搜索与以下用户输入相关的记忆，并处理可能的用户偏好:\n{user_input}\n\n用户情绪分析结果:\n{emotion_analysis}",
                 source="user"
@@ -321,8 +333,11 @@ class EmotionalAgentSystem:
             memory_response = await self.memory_manager.on_messages([memory_message], cancellation_token)
             context_result = memory_response.chat_message.content if memory_response.chat_message else "无相关记忆"
             
+            # 记录记忆上下文
+            self.logger.step("memory", context_result)
+            
             # 测试输出
-            print(f"\n[记忆上下文] {context_result}")
+            print(f"\n[记忆上下文] （{context_result}）")
 
             # 3. 生成内心思考
             thought_message = TextMessage(
@@ -341,8 +356,11 @@ class EmotionalAgentSystem:
             thought_response = await self.thinker.on_messages([thought_message], cancellation_token)
             inner_thoughts = thought_response.chat_message.content if thought_response.chat_message else "无法生成思考"
             
+            # 记录内心思考
+            self.logger.step("thinking", inner_thoughts)
+            
             # 测试输出
-            print(f"\n[内心思考] {inner_thoughts}")
+            print(f"\n[内心思考] （{inner_thoughts}）")
 
             # 4. 生成回复
             companion_message = TextMessage(
@@ -365,6 +383,9 @@ class EmotionalAgentSystem:
             
             companion_response = await self.companion.on_messages([companion_message], cancellation_token)
             response = companion_response.chat_message.content if companion_response.chat_message else "抱歉，我无法回应"
+            
+            # 记录智能体回答
+            self.logger.step("response", response)
             
             # 5. 保存交互
             self.memory_system.add_episodic_memory(
@@ -390,10 +411,10 @@ class EmotionalAgentSystem:
                 change = await self.memory_manager.on_messages([update_message], cancellation_token)
             
                 # 测试输出，是否更新了情感状态
-                print(f"\n[情感更新] {change.chat_message.content if change.chat_message else '无情感更新'}")
+                print(f"\n[情感更新] （{change.chat_message.content if change.chat_message else '无情感更新'}）")
 
             # 打印回复
-            print(f"\n[情感陪伴] {response}")
+            print(f"\n[小梦] {response}")
             
             # 7. 随机触发自主回忆
             if random.random() < 0.15:  # 15%的概率触发
