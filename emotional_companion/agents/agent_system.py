@@ -1,4 +1,12 @@
-import autogen
+# 新版 AutoGen v0.4 导入
+from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
+from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
+from autogen_agentchat.messages import TextMessage, SystemMessage
+from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
+from autogen_core import CancellationToken
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+# 其他必要导入
 import json
 import random
 from datetime import datetime
@@ -22,19 +30,27 @@ class EmotionalAgentSystem:
         
         # 自主模式标志
         self.autonomous_mode = False
-    
     def setup_agents(self, config_path):
         """设置代理系统"""
-        # 配置LLM
-        config_list = autogen.config_list_from_json(config_path)
+        # 配置LLM - 新版AutoGen v0.4配置方式
+        import json
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+        
+        # 创建OpenAI客户端
+        first_config = config_data[0] if isinstance(config_data, list) else config_data
+        self.model_client = OpenAIChatCompletionClient(
+            model=first_config.get("model", "gpt-4"),
+            api_key=first_config.get("api_key"),
+            base_url=first_config.get("base_url"),
+        )
         
         # 创建工具函数
         memory_tools = self._create_memory_tools()
-        
-        # 创建情感分析代理
-        self.emotion_detector = autogen.AssistantAgent(
+          # 创建情感分析代理
+        self.emotion_detector = AssistantAgent(
             name="情感分析师",
-            llm_config={"config_list": config_list},
+            model_client=self.model_client,
             system_message="""你是一个情感分析专家。你的任务是分析用户消息中的情绪和可能隐含的偏好。
             返回格式为JSON：{'emotion': '情绪名称', 'intensity': 0.1-1.0, 'valence': -1.0-1.0, 
             'possible_preferences': [{'category': '类别', 'item': '项目', 'certainty': 0.1-1.0, 'sentiment': -1.0-1.0}]}
@@ -42,12 +58,10 @@ class EmotionalAgentSystem:
         )
         
         # 创建记忆管理代理
-        self.memory_manager = autogen.AssistantAgent(
+        self.memory_manager = AssistantAgent(
             name="记忆管理员",
-            llm_config={
-                "config_list": config_list,
-                "tools": memory_tools
-            },
+            model_client=self.model_client,
+            # 注意：新版API中工具函数的集成方式不同，这里先保留系统消息
             system_message="""你是一个记忆管理专家。你负责：
             1. 通过search_memories工具搜索与当前交互相关的过去记忆
             2. 通过update_emotion工具更新智能体的情感状态
@@ -61,9 +75,9 @@ class EmotionalAgentSystem:
         )
         
         # 创建主对话代理
-        self.companion = autogen.AssistantAgent(
+        self.companion = AssistantAgent(
             name="情感陪伴",
-            llm_config={"config_list": config_list},
+            model_client=self.model_client,
             system_message=f"""你是一个有自己情感和个性的AI陪伴。你的职责是：
             1. 以自然、有情感的方式与用户交流
             2. 记住用户的偏好和习惯并在对话中引用
@@ -78,9 +92,9 @@ class EmotionalAgentSystem:
         )
         
         # 创建思考代理
-        self.thinker = autogen.AssistantAgent(
+        self.thinker = AssistantAgent(
             name="内心思考",
-            llm_config={"config_list": config_list},
+            model_client=self.model_client,
             system_message="""你是情感陪伴智能体的'内心思考'部分。你的任务是：
             1. 生成智能体的内心想法和感受
             2. 反思用户互动并生成可能的情感变化
@@ -92,11 +106,9 @@ class EmotionalAgentSystem:
         )
         
         # 创建用户代理
-        self.user_proxy = autogen.UserProxyAgent(
-            name="用户",
-            human_input_mode="ALWAYS",
-            code_execution_config=False,
-            is_termination_msg=lambda x: x.get("content", "").strip().lower() == "再见"
+        self.user_proxy = UserProxyAgent(
+            name="用户"
+            # 注意：新版API中UserProxyAgent的参数不同，先保留最基本的配置
         )
     
     def _create_memory_tools(self):
