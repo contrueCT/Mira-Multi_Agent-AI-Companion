@@ -2,9 +2,11 @@ import argparse
 import os
 import sys
 import pyfiglet
+import asyncio
 from emotional_companion.agents.agent_system import EmotionalAgentSystem
 from emotional_companion.utils.time_utils import get_formatted_time
-def main():
+
+async def main():
     parser = argparse.ArgumentParser(description="情感陪伴智能体")
     parser.add_argument("--config", type=str, default="configs/OAI_CONFIG_LIST.json", 
                         help="OpenAI配置文件路径")
@@ -33,11 +35,11 @@ def main():
     # 启动对话系统
     try:
         agent_system = EmotionalAgentSystem(config_path=args.config)
-        agent_system.run_conversation()
+        await agent_system.run_conversation()  # 使用 await 调用异步方法
     except KeyboardInterrupt:
         print("\n程序已中断。期待下次与您交流！")
     except Exception as e:
         print(f"\n发生错误: {e}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())  # 使用 asyncio.run() 运行异步主函数
