@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "autogen-agentchat>=0.2.0",  # 尝试使用替代包名
+        "autogen-agentchat>=0.4.0",  # 尝试使用替代包名
         "chromadb>=0.4.17",
         "sentence-transformers>=2.2.2",
         "schedule>=1.2.0",

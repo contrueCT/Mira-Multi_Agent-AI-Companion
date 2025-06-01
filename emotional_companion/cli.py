@@ -1,9 +1,9 @@
 import argparse
 import os
+import sys
 import pyfiglet
-from .agents.agent_system import EmotionalAgentSystem
-from .utils.time_utils import get_formatted_time
-
+from emotional_companion.agents.agent_system import EmotionalAgentSystem
+from emotional_companion.utils.time_utils import get_formatted_time
 def main():
     parser = argparse.ArgumentParser(description="情感陪伴智能体")
     parser.add_argument("--config", type=str, default="configs/OAI_CONFIG_LIST.json", 

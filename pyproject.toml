@@ -7,7 +7,7 @@ name = "emotional-companion"
 version = "0.1.0"
 description = "基于AutoGen和ChromaDB的情感陪伴智能体"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "contrueCT"}
 ]
@@ -17,7 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pyautogen>=0.2.0",
+    "autogen-agentchat",
+    "autogen-ext[openai]",
     "chromadb>=0.4.17",
     "sentence-transformers>=2.2.2",
     "schedule>=1.2.0",
@@ -37,7 +38,7 @@ companion = "emotional_companion.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py39"]
+target-version = ["py310"]
 
 [tool.isort]
 profile = "black"

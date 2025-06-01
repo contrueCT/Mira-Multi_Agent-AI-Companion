@@ -319,7 +319,7 @@ class EmotionalAgentSystem:
                 break
             
             # 1. 分析用户情绪
-            self.user_proxy.initiate_chat(
+            self.user_proxy.generate_reply(
                 self.emotion_detector,
                 message=f"分析这句话中的情绪: {user_input}"
             )
