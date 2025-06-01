@@ -1,10 +1,8 @@
 import chromadb
-from sentence_transformers import SentenceTransformer
 import json
 from datetime import datetime
 import os
 import random
-import numpy as np
 from chromadb.utils import embedding_functions
 
 class EmotionalMemorySystem:

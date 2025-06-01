@@ -1,8 +1,6 @@
 # 新版 AutoGen v0.4 导入
 from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
-from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_agentchat.messages import TextMessage
-from autogen_agentchat.conditions import TextMentionTermination, MaxMessageTermination
 from autogen_core import CancellationToken
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
@@ -15,7 +13,6 @@ import schedule
 import time
 import os
 import asyncio
-from typing import List, Optional
 from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 from emotional_companion.utils.conversation_logger import SimpleLogger
 
