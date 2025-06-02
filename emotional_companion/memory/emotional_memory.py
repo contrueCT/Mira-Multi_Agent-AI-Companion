@@ -223,7 +223,7 @@ class EmotionalMemorySystem:
             self.emotional_state["valence"] = valence
             
         self.save_emotional_state()
-    #此处的相关性阈值用于测试，后续需要修改
+    
     def semantic_memory_search(self, query, collection_name="episodic", n_results=5, 
                               where_filter=None, threshold=0.6):
         """语义记忆搜索"""
