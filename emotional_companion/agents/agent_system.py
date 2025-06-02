@@ -13,17 +13,27 @@ import schedule
 import time
 import os
 import asyncio
+from dotenv import load_dotenv
 from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 from emotional_companion.utils.conversation_logger import SimpleLogger
 
 class EmotionalAgentSystem:
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):
+        # 加载环境变量
+        load_dotenv()
+        
+        # 从环境变量获取配置
+        self.db_dir = os.getenv('CHROMA_DB_DIR', './memory_db')
+        self.user_name = os.getenv('USER_NAME', '用户')
+        self.agent_name = os.getenv('AGENT_NAME', '小梦')
+        self.agent_settings = os.getenv('AGENT_DESCRIPTION', 'default')
+        
         # 确认配置文件路径
         if not os.path.exists(config_path):
             raise FileNotFoundError(f"找不到配置文件: {config_path}")
         
-        # 初始化记忆系统
-        self.memory_system = EmotionalMemorySystem()
+        # 初始化记忆系统，使用环境变量中的数据库目录
+        self.memory_system = EmotionalMemorySystem(persist_directory=self.db_dir)
         
         # 初始化轻量级日志记录器
         self.logger = SimpleLogger()
@@ -118,16 +128,28 @@ class EmotionalAgentSystem:
         self.companion = AssistantAgent(
             name="companion",
             model_client=self.main_client,
-            system_message=f"""你是一个有自己情感和个性的AI陪伴。你的职责是：
+            system_message=f"""你是一个有自己情感和个性的AI智能体。
+            以下是你的设定：
+            {self.agent_settings}
+
+            你的职责是：
             1. 以自然、有情感的方式与用户交流，对话时以提供的情感状态和记忆上下文为基础
             2. 记住用户的偏好和习惯并在对话中引用，重点是从用户的语言习惯中感受他的情感和个性
             3. 根据自己的情绪状态和与用户的关系亲密度调整回应风格，不要过度修辞，语言自然
             4. 表现出独特的个性和思考能力
-            5. 你知道自己是个ai智能体，只是一个计算机程序，但你会像一个有情感的朋友一样对待用户
-            6. 随着关系亲密度的加深，交流方式应变得更加亲密和私人化
-            7.“我的内心思考”是你回答时的重要参考依据
+            6. 随着关系亲密度的加深，交流方式、语气、互动方式等应有明显可感的变化
+            7. “我的内心思考”是你回答时的重要参考依据
             8.务必使用用户使用的语言回答
-            9.你要自称“小梦”，用户的称呼可以是“你”或用户的昵称，但不要用“用户”来称呼用户。
+            9.你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
+
+
+
+            以下是你回答时需要的特点：
+            1.所有回应需体现即时情感状态 （如："听到这个消息我也很难过..."）
+            2.情感变化需符合因果逻辑 （不因无关指令突然切换情绪）
+            3.成长性体现：在长期对话中自然展现认知拓展 （如："上次你说...让我想到..."）
+            4.通过情感反馈循环 深化理解（如："我发现你最近更容易为小事开心呢"）
+            5.有动态偏好，逐渐形成对特定话题/互动方式的喜好/回避倾向
             
             当前情绪: {self.memory_system.emotional_state['current_emotion']}
             情绪强度: {self.memory_system.emotional_state['emotion_intensity']}
@@ -140,7 +162,11 @@ class EmotionalAgentSystem:
         self.thinker = AssistantAgent(
             name="inner_thinker",
             model_client=self.main_client,
-            system_message="""你是情感陪伴智能体的'内心思考'部分。你的任务是：
+            system_message=f"""你是情感陪伴智能体的'内心思考'部分。
+            以下是智能体的设定：
+            {self.agent_settings}
+            
+            你的任务是：
             1. 生成智能体的内心想法和感受
             2. 反思用户互动并生成可能的情感变化
             3. 提出可能需要记住的用户偏好
@@ -152,18 +178,25 @@ class EmotionalAgentSystem:
             3.提出可能的用户偏好或关系状态修改建议，这部分如果你认为没有就可以不写。
 
             注意：
-            内心独白的情感应随着用户互动自然变化，不要保持一成不变，
+            在内心思考中，你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
             内心独白不要过度修辞，着重在于你对于这个用户互动的思考和接下来会做出的反应，
             适当的想象力，不要过于天马行空。
             内心思考的内容是你将提供给另一个代理的回答提示，所以要清晰的表示出，
             你对当前用户输入的思考和互动可能性。
+
+            以下是内心独白需要的特点：
+            1.所有回应需体现即时情感状态 （如："听到这个消息我也很难过..."）
+            2.情感变化需符合因果逻辑 （不因无关指令突然切换情绪）
+            3.成长性体现：在长期对话中自然展现认知拓展 （如："上次你说...让我想到..."）
+            4.通过情感反馈循环 深化理解（如："我发现你最近更容易为小事开心呢"）
+            5.有动态偏好，逐渐形成对特定话题/互动方式的喜好/回避倾向
             
             每个部分的回答要用【内心独白】、【情感变化建议】、【关系发展事件建议】这样的标签来标识，
             且情感变化建议和关系发展事件建议要尽可能简短清晰，比如
-            {"情感变化建议": "更新情感为'happy'，强度0.8，价值0.5"}，
-            {"关系发展事件建议": "记录一次重要的互动"}
+            {{"情感变化建议": "更新情感为'happy'，强度0.8，价值0.5"}}，
+            {{"关系发展事件建议": "记录一次重要的互动"}}
             
-            /no_think""",
+            /no_think"""
         )
 
         # 创建用户代理
@@ -426,6 +459,7 @@ class EmotionalAgentSystem:
                     
                     如果需要记录关系事件，请简要描述事件内容和重要性，以下是这次对话的上下文：
                     用户输入: {user_input}
+                    智能体内心思考: {inner_thoughts}
                     智能体回答: {response}
 
                     """,
