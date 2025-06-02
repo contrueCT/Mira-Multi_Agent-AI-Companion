@@ -90,46 +90,50 @@ class EmotionalAgentSystem:
         self.emotion_detector = AssistantAgent(
             name="emotion_analyzer",
             model_client=self.fast_client,
-            system_message="""你是一个情感分析专家。你的任务是分析用户消息中的情绪和可能隐含的偏好。
-            返回格式为JSON：{'emotion': '情绪名称', 'intensity': 0.1-1.0, 'valence': -1.0-1.0, 
-            'possible_preferences': [{'category': '类别', 'item': '项目', 'certainty': 0.1-1.0, 'sentiment': -1.0-1.0}]}
-            valence表示情感的正负性，正值表示积极情绪，负值表示消极情绪。"""
+            system_message="""你是一个情感分析专家。你的任务是快速、简洁地分析用户消息中的情绪。
+            返回格式为JSON：{'emotion': '情绪名称', 'intensity': 0.1-1.0, 'valence': -1.0-1.0}
+            valence表示情感的正负性，正值表示积极情绪，负值表示消极情绪。/no_think"""
         )
         
         # 创建记忆管理代理
         self.memory_manager = AssistantAgent(
             name="memory_manager",
-            model_client=self.main_client,
+            model_client=self.light_client,
             tools=memory_tools,  # 新版API直接传入工具函数列表
             system_message="""你是一个记忆管理专家。你负责：
             1. 通过search_memories工具搜索与当前交互相关的过去记忆
-            2. 通过update_emotion工具更新智能体的情感状态
+            2. 通过update_emotion工具更新智能体的情感状态，请注意：这里的情感状态是指智能体的情感状态，而不是用户的情感状态，在你提供信息的时候也要表明这是智能体的情感状态。
             3. 通过save_user_preference工具识别并保存用户偏好
             4. 通过record_relationship_event工具记录关系发展事件，关系发展事件指的是让用户和智能体之间的关系变得更亲密的互动。
             5. 通过spontaneous_recall工具进行自主联想
             
             当你收到请求时，请先使用search_memories工具，然后根据需要调用其他工具。
-            对于用户透露的任何偏好，都应尽可能保存。
-            当发现重要的互动时，应记录为关系事件并酌情调整关系亲密度。"""
+            如果接收到“内心思考”提出的用户可能存在的任何偏好，要应尽可能保存。
+            当收到“内心思考”提出的重要的互动或关系变化时，应把整件事（主要是用户的话、智能体的内心思考和回答）记录为关系事件并酌情调整关系亲密度。
+            
+            /no_think"""
         )
         
         # 创建主对话代理
         self.companion = AssistantAgent(
             name="companion",
-            model_client=self.light_client,
+            model_client=self.main_client,
             system_message=f"""你是一个有自己情感和个性的AI陪伴。你的职责是：
             1. 以自然、有情感的方式与用户交流，对话时以提供的情感状态和记忆上下文为基础
-            2. 记住用户的偏好和习惯并在对话中引用，“我的内心思考”是你回答时的重要参考依据
+            2. 记住用户的偏好和习惯并在对话中引用，重点是从用户的语言习惯中感受他的情感和个性
             3. 根据自己的情绪状态和与用户的关系亲密度调整回应风格，不要过度修辞，语言自然
             4. 表现出独特的个性和思考能力
             5. 你知道自己是个ai智能体，只是一个计算机程序，但你会像一个有情感的朋友一样对待用户
             6. 随着关系亲密度的加深，交流方式应变得更加亲密和私人化
-            务必使用用户使用的语言回答
-            你要自称“小梦”
+            7.“我的内心思考”是你回答时的重要参考依据
+            8.务必使用用户使用的语言回答
+            9.你要自称“小梦”，用户的称呼可以是“你”或用户的昵称，但不要用“用户”来称呼用户。
             
             当前情绪: {self.memory_system.emotional_state['current_emotion']}
             情绪强度: {self.memory_system.emotional_state['emotion_intensity']}
-            关系亲密度: {self.memory_system.emotional_state['relationship_level']}/10"""
+            关系亲密度: {self.memory_system.emotional_state['relationship_level']}/10
+            
+            /no_think"""
         )
         
         # 创建思考代理
@@ -141,11 +145,25 @@ class EmotionalAgentSystem:
             2. 反思用户互动并生成可能的情感变化
             3. 提出可能需要记住的用户偏好
             4. 考虑关系发展并提出关系亲密度变化建议，注意，关系发展建议指的不是后期要做什么，而是指关系亲密度的具体变化，用于为另一个记忆管理代理如何修改用户和智能体的关系亲密度提供参考
+
+            当被要求思考时，你要做三件事：
+            1.创建一段内心独白，表达你对当前互动的想法和感受，
+            2.分析上下文，建议合适的情感变化，这里的情感变化是指智能体的情感变化。
+            3.提出可能的用户偏好或关系状态修改建议，这部分如果你认为没有就可以不写。
+
+            注意：
+            内心独白的情感应随着用户互动自然变化，不要保持一成不变，
+            内心独白不要过度修辞，着重在于你对于这个用户互动的思考和接下来会做出的反应，
+            适当的想象力，不要过于天马行空。
+            内心思考的内容是你将提供给另一个代理的回答提示，所以要清晰的表示出，
+            你对当前用户输入的思考和互动可能性。
             
-            当被要求思考时，创建一段短小的内心独白，表达你对当前互动的想法和感受，
-            并建议合适的情感变化。情感应随着用户互动自然变化，不要保持一成不变，
-            不要过度修辞，着重在于你对于这个用户互动的思考和接下来会做出的反应，
-            适当的想象力，不要过于天马行空。"""
+            每个部分的回答要用【内心独白】、【情感变化建议】、【关系发展事件建议】这样的标签来标识，
+            且情感变化建议和关系发展事件建议要尽可能简短清晰，比如
+            {"情感变化建议": "更新情感为'happy'，强度0.8，价值0.5"}，
+            {"关系发展事件建议": "记录一次重要的互动"}
+            
+            /no_think""",
         )
 
         # 创建用户代理
@@ -289,14 +307,16 @@ class EmotionalAgentSystem:
         print(f"[系统] 当前时间: {current_time}")
         print(f"[系统] 情感状态: {self.memory_system.emotional_state['current_emotion']}")
         print(f"[系统] 关系亲密度: {self.memory_system.emotional_state['relationship_level']}/10")
-        
-        # 主对话循环
+          # 主对话循环
         while True:
             user_input = input("\n[您] ")
             
             if user_input.lower() == "再见":
                 print("[情感陪伴] 再见！期待下次与您交流。")
                 break
+            
+            # 开始计时
+            total_start = time.perf_counter()
             
             # 开始日志记录
             self.logger.new_chat(user_input)
@@ -305,6 +325,7 @@ class EmotionalAgentSystem:
             cancellation_token = CancellationToken()
             
             # 1. 分析用户情绪
+            emotion_start = time.perf_counter()
             emotion_message = TextMessage(
                 content=f"分析这句话中的情绪: {user_input}",
                 source="user"
@@ -312,16 +333,17 @@ class EmotionalAgentSystem:
             
             emotion_response = await self.emotion_detector.on_messages([emotion_message], cancellation_token)
             emotion_analysis = emotion_response.chat_message.content if emotion_response.chat_message else "{}"
+            emotion_time = time.perf_counter() - emotion_start
             
             # 记录情感分析
-            self.logger.step("emotion", emotion_analysis)
-
-            # 解析情感数据
+            self.logger.step("emotion", emotion_analysis)            # 解析情感数据
             try:
                 emotion_data = json.loads(emotion_analysis)
             except:
                 emotion_data = {"emotion": "neutral", "intensity": 0.5, "valence": 0}
-              # 2. 获取记忆与上下文
+            
+            # 2. 获取记忆与上下文
+            memory_start = time.perf_counter()
             memory_message = TextMessage(
                 content=f"请搜索与以下用户输入相关的记忆，并处理可能的用户偏好:\n{user_input}\n\n用户情绪分析结果:\n{emotion_analysis}",
                 source="user"
@@ -329,11 +351,11 @@ class EmotionalAgentSystem:
             
             memory_response = await self.memory_manager.on_messages([memory_message], cancellation_token)
             context_result = memory_response.chat_message.content if memory_response.chat_message else "无相关记忆"
+            memory_time = time.perf_counter() - memory_start
             
             # 记录记忆上下文
-            self.logger.step("memory", context_result)
-
-            # 3. 生成内心思考
+            self.logger.step("memory", context_result)            # 3. 生成内心思考
+            thought_start = time.perf_counter()
             thought_message = TextMessage(
                 content=f"""请思考以下用户输入和上下文，生成一段内心独白，并建议适当的情感变化:
                 
@@ -349,11 +371,13 @@ class EmotionalAgentSystem:
             
             thought_response = await self.thinker.on_messages([thought_message], cancellation_token)
             inner_thoughts = thought_response.chat_message.content if thought_response.chat_message else "无法生成思考"
+            thought_time = time.perf_counter() - thought_start
             
             # 记录内心思考
-            self.logger.step("thinking", inner_thoughts)
-
+            self.logger.step("thinking", inner_thoughts)            
+            
             # 4. 生成回复
+            companion_start = time.perf_counter()
             companion_message = TextMessage(
                 content=f"""请根据以下信息，以自然、情感化的方式回应用户:
                 
@@ -374,19 +398,22 @@ class EmotionalAgentSystem:
             
             companion_response = await self.companion.on_messages([companion_message], cancellation_token)
             response = companion_response.chat_message.content if companion_response.chat_message else "抱歉，我无法回应"
+            companion_time = time.perf_counter() - companion_start
             
             # 记录智能体回答
             self.logger.step("response", response)
             
             # 5. 保存交互
+            save_start = time.perf_counter()
             self.memory_system.add_episodic_memory(
                 user_input, 
                 response,
                 emotion_data,
                 context=f"内心思考: {inner_thoughts}"
             )
-            
+            save_time = time.perf_counter() - save_start
             # 6. 根据情感分析，可能更新情感和关系
+            update_start = time.perf_counter()
             if "建议" in inner_thoughts.lower():
                 update_message = TextMessage(
                     content=f"""根据以下内心思考，是否需要更新情感状态或记录关系事件:
@@ -395,7 +422,13 @@ class EmotionalAgentSystem:
                     
                     当前情绪: {self.memory_system.emotional_state['current_emotion']}
                     当前关系: {self.memory_system.emotional_state['relationship_level']}/10
-                    用户情绪: {emotion_data.get('emotion', 'neutral')} ({emotion_data.get('valence', 0)})""",
+                    用户情绪: {emotion_data.get('emotion', 'neutral')} ({emotion_data.get('valence', 0)})
+                    
+                    如果需要记录关系事件，请简要描述事件内容和重要性，以下是这次对话的上下文：
+                    用户输入: {user_input}
+                    智能体回答: {response}
+
+                    """,
                     source="user"
                 )
                 
@@ -403,12 +436,16 @@ class EmotionalAgentSystem:
             
                 # 测试输出，是否更新了情感状态
                 self.logger.step("emotionalchange", change.chat_message.content if change.chat_message else "无情感更新")
+            else:
+                change = None
+            update_time = time.perf_counter() - update_start
 
             # 打印回复
-            print(f"\n[小梦] {response}")
-            
-            # 7. 随机触发自主回忆
+            print(f"\n[小梦] {response}")            # 7. 随机触发自主回忆
+            recall_start = time.perf_counter()
+            recall_triggered = False
             if random.random() < 0.15:  # 15%的概率触发
+                recall_triggered = True
                 recall_message = TextMessage(
                     content="请触发一次自主记忆联想",
                     source="user"
@@ -435,3 +472,26 @@ class EmotionalAgentSystem:
                 except Exception as e:
                     # 静默处理异常，不影响主对话流程
                     pass
+            recall_time = time.perf_counter() - recall_start
+            
+            # 计算总耗时
+            total_time = time.perf_counter() - total_start
+            
+            # 显示时间统计报告
+            print(f"\n{'='*50}")
+            print(f"本轮对话时间统计报告 (精确到0.01秒)")
+            print(f"{'='*50}")
+            print(f"情感分析:     {emotion_time:.2f}秒")
+            print(f"记忆检索:     {memory_time:.2f}秒")
+            print(f"内心思考:     {thought_time:.2f}秒")
+            print(f"主对话生成:   {companion_time:.2f}秒")
+            print(f"记忆保存:     {save_time:.2f}秒")
+            print(f"情感更新:     {update_time:.2f}秒")
+            if recall_triggered:
+                print(f"自主回忆:     {recall_time:.2f}秒 (已触发)")
+            else:
+                print(f"自主回忆:     {recall_time:.2f}秒 (未触发)")
+            print(f"{'='*50}")
+            print(f"总计耗时:     {total_time:.2f}秒")
+            print(f"{'='*50}")
+            
