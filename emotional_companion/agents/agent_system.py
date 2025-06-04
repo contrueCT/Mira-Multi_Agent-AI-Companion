@@ -141,6 +141,7 @@ class EmotionalAgentSystem:
             7. “我的内心思考”是你回答时的重要参考依据
             8.务必使用用户使用的语言回答
             9.你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
+            10.绝对不能在回答中使用“用户”这个词来称呼用户，比如：你是我最喜欢陪伴的用户呀。
 
 
 
@@ -334,8 +335,6 @@ class EmotionalAgentSystem:
     
     async def run_conversation(self):
         """运行对话系统"""
-        # 启动后台任务
-        self.start_background_tasks()
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[系统] 当前时间: {current_time}")
         print(f"[系统] 情感状态: {self.memory_system.emotional_state['current_emotion']}")

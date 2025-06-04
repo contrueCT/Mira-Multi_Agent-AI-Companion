@@ -3,7 +3,7 @@ import os
 import sys
 import pyfiglet
 import asyncio
-from emotional_companion.agents.agent_system import EmotionalAgentSystem
+from emotional_companion.agents.conversation_handler import ConversationCLI
 from emotional_companion.utils.time_utils import get_formatted_time
 
 async def main():
@@ -34,12 +34,12 @@ async def main():
     
     # 启动对话系统
     try:
-        agent_system = EmotionalAgentSystem(config_path=args.config)
-        await agent_system.run_conversation()  # 使用 await 调用异步方法
+        cli = ConversationCLI(config_path=args.config)
+        await cli.run()
     except KeyboardInterrupt:
         print("\n程序已中断。期待下次与您交流！")
     except Exception as e:
         print(f"\n发生错误: {e}")
 
 if __name__ == "__main__":
-    asyncio.run(main())  # 使用 asyncio.run() 运行异步主函数
+    asyncio.run(main())
