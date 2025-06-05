@@ -388,8 +388,7 @@ class EmotionalMemorySystem:
         
         # 情感状态摘要
         emotional_summary = self.get_emotional_summary()
-        
-        # 格式化输出
+          # 格式化输出
         context = "## 相关记忆\n\n"
         
         if episodic_memories:
@@ -399,7 +398,20 @@ class EmotionalMemorySystem:
                 decay = memory["metadata"].get("decay_factor", 1.0)
                 importance = memory["metadata"].get("importance", 0.5)
                 if decay * importance > self.importance_threshold or full_context:
-                    context += f"{i+1}. {memory['content']}\n"
+                    # 获取时间戳并格式化
+                    timestamp = memory["metadata"].get("timestamp", "")
+                    time_str = ""
+                    if timestamp:
+                        try:
+                            # 解析ISO格式的时间戳
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                            time_str = f" ({dt.strftime('%m-%d %H:%M')})"
+                        except:
+                            # 如果解析失败，直接显示原始时间戳的前16个字符
+                            time_str = f" ({timestamp[:16]})"
+                    
+                    context += f"{i+1}. {memory['content']}{time_str}\n"
                     if full_context and "user_emotion" in memory["metadata"]:
                         try:
                             user_emotion = json.loads(memory["metadata"]["user_emotion"])
