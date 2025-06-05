@@ -20,14 +20,17 @@ class EmotionalMemorySystem:
 
         # 定义HNSW索引参数
         self.hnsw_metadata_config = {
-            "hnsw:space": "cosine",  # 使用余弦相似度
-            "hnsw:M": 32,            # 推荐M值
-            "hnsw:construction_ef": 256, # 推荐construction_ef值
-            "hnsw:num_threads": 4 # (可选) 如果你的CPU核心多，可以尝试指定构建线程数
+            # 使用余弦相似度
+            "hnsw:space": "cosine",  
+            # 推荐M值
+            "hnsw:M": 32,         
+            # construction_ef值   
+            "hnsw:construction_ef": 256,
+            # (可选) 如果你的CPU核心多，可以尝试指定构建线程数 
+            "hnsw:num_threads": 4 
         }
     
-        
-        # 创建不同类型的记忆集合
+          # 创建不同类型的记忆集合
         self.collections = {
             "episodic": self.client.get_or_create_collection(name = "episodic_memory", 
                                                             embedding_function=self.embedding_function,
@@ -42,6 +45,9 @@ class EmotionalMemorySystem:
                                                             embedding_function=self.embedding_function,
                                                             metadata=self.hnsw_metadata_config),
             "preferences": self.client.get_or_create_collection(name = "preferences_memory", 
+                                                            embedding_function=self.embedding_function,
+                                                            metadata=self.hnsw_metadata_config),
+            "user_profile": self.client.get_or_create_collection(name = "user_profile_memory", 
                                                             embedding_function=self.embedding_function,
                                                             metadata=self.hnsw_metadata_config)
         }
@@ -460,3 +466,184 @@ class EmotionalMemorySystem:
                     "triggered_by": "重要记忆随机联想"
                 }
         return None
+    
+    def add_user_profile_info(self, category, value, confidence=1.0, source="user_direct"):
+        """
+        添加用户关键信息
+        
+        Args:
+            category: 信息类别 (如: "性别", "生日", "过敏食物", "家庭成员", "朋友")
+            value: 信息内容
+            confidence: 信息可信度 (0-1)
+            source: 信息来源 ("user_direct", "conversation", "inference")
+        """
+        timestamp = datetime.now().isoformat()
+        profile_id = f"profile_{category}_{timestamp}"
+        
+        # 创建可搜索的文本描述
+        profile_text = f"用户{category}: {value}"
+        
+        # 查询是否已存在相同类别的信息
+        existing = self.collections["user_profile"].query(
+            query_texts=[category],
+            n_results=5,
+            where={"category": category}
+        )
+        
+        # 如果存在相同类别且可信度较高，则更新最新的记录
+        if (existing and len(existing["ids"]) > 0 and len(existing["ids"][0]) > 0 
+            and confidence >= 0.8 and source in ["user_direct", "conversation"]):
+            
+            # 更新最近的记录
+            latest_id = existing["ids"][0][0]
+            self.collections["user_profile"].update(
+                ids=[latest_id],
+                metadatas=[{
+                    "category": category,
+                    "value": value,
+                    "confidence": confidence,
+                    "source": source,
+                    "timestamp": timestamp,
+                    "last_updated": timestamp
+                }],
+                documents=[profile_text]
+            )
+        else:
+            # 添加新信息
+            self.collections["user_profile"].add(
+                ids=[profile_id],
+                metadatas=[{
+                    "category": category,
+                    "value": value,
+                    "confidence": confidence,
+                    "source": source,
+                    "timestamp": timestamp,
+                    "last_updated": timestamp
+                }],
+                documents=[profile_text]
+            )
+    
+    def get_user_profile(self, category=None):
+        """
+        获取用户关键信息
+        
+        Args:
+            category: 可选的信息类别过滤
+            
+        Returns:
+            dict: 用户关键信息字典
+        """
+        where_filter = {"category": category} if category else None
+        
+        try:
+            results = self.collections["user_profile"].get(
+                where=where_filter
+            )
+            
+            profile_data = {}
+            if results and "ids" in results and results["ids"]:
+                for i, profile_id in enumerate(results["ids"]):
+                    metadata = results["metadatas"][i]
+                    cat = metadata.get("category", "未知")
+                    value = metadata.get("value", "")
+                    confidence = metadata.get("confidence", 0.0)
+                    source = metadata.get("source", "unknown")
+                    timestamp = metadata.get("timestamp", "")
+                    
+                    # 如果类别已存在，保留置信度更高或更新的信息
+                    if cat in profile_data:
+                        existing_confidence = profile_data[cat].get("confidence", 0.0)
+                        existing_timestamp = profile_data[cat].get("timestamp", "")
+                        
+                        if confidence > existing_confidence or (confidence == existing_confidence and timestamp > existing_timestamp):
+                            profile_data[cat] = {
+                                "value": value,
+                                "confidence": confidence,
+                                "source": source,
+                                "timestamp": timestamp
+                            }
+                    else:
+                        profile_data[cat] = {
+                            "value": value,
+                            "confidence": confidence,
+                            "source": source,
+                            "timestamp": timestamp
+                        }
+            
+            return profile_data
+            
+        except Exception as e:
+            print(f"获取用户信息失败: {e}")
+            return {}
+    
+    def update_user_profile_from_conversation(self, extracted_info):
+        """
+        从对话中提取的信息更新用户资料
+        
+        Args:
+            extracted_info: 字典格式的提取信息 
+                          如: {"生日": "3月15日", "家庭成员": "妈妈是老师"}
+        """
+        for category, value in extracted_info.items():
+            # 从对话中提取的信息置信度相对较低
+            self.add_user_profile_info(
+                category=category,
+                value=value,
+                confidence=0.7,
+                source="conversation"
+            )
+    
+    def search_user_profile_info(self, query, n_results=5):
+        """
+        搜索用户关键信息
+        
+        Args:
+            query: 搜索查询
+            n_results: 返回结果数量
+            
+        Returns:
+            list: 匹配的用户信息列表
+        """
+        try:
+            results = self.semantic_memory_search(
+                query=query,
+                collection_name="user_profile",
+                n_results=n_results,
+                threshold=0.7
+            )
+            return results
+        except Exception as e:
+            print(f"搜索用户信息失败: {e}")
+            return []
+    
+    def get_user_profile_summary(self):
+        """
+        获取用户信息摘要，用于智能体上下文
+        
+        Returns:
+            str: 格式化的用户信息摘要
+        """
+        profile_data = self.get_user_profile()
+        
+        if not profile_data:
+            return "暂无用户关键信息记录"
+        
+        summary = "## 用户关键信息\n\n"
+        
+        # 按重要性和类别排序显示
+        priority_categories = ["性别", "生日", "年龄", "职业", "家庭成员", "朋友", "过敏食物", "疾病", "居住地"]
+        
+        # 先显示高优先级类别
+        for category in priority_categories:
+            if category in profile_data:
+                info = profile_data[category]
+                confidence_desc = "确定" if info["confidence"] >= 0.8 else "可能"
+                summary += f"- {category}: {info['value']} ({confidence_desc})\n"
+        
+        # 再显示其他类别
+        for category, info in profile_data.items():
+            if category not in priority_categories:
+                confidence_desc = "确定" if info["confidence"] >= 0.8 else "可能"
+                summary += f"- {category}: {info['value']} ({confidence_desc})\n"
+        
+        return summary

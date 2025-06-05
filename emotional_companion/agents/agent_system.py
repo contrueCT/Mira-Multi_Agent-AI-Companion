@@ -116,10 +116,26 @@ class EmotionalAgentSystem:
             3. 通过save_user_preference工具识别并保存用户偏好
             4. 通过record_relationship_event工具记录关系发展事件，关系发展事件指的是让用户和智能体之间的关系变得更亲密的互动。
             5. 通过spontaneous_recall工具进行自主联想
+            6. 通过save_user_profile_info工具保存用户关键信息（如性别、生日、家庭成员、过敏食物等客观事实）
+            7. 通过update_user_profile_from_chat工具批量更新从对话中提取的用户关键信息
+            8. 通过search_user_profile工具搜索特定的用户关键信息
+            9. 通过get_user_profile_summary工具获取用户信息的完整摘要
+
+            当前用户的名字是{self.user_name}，你要自称"小梦"，用户的称呼可以是"你"或{self.user_name}的昵称，但不要用"用户"来称呼用户。
             
             当你收到请求时，请先使用search_memories工具，然后根据需要调用其他工具。
-            如果接收到“内心思考”提出的用户可能存在的任何偏好，要应尽可能保存。
-            当收到“内心思考”提出的重要的互动或关系变化时，应把整件事（主要是用户的话、智能体的内心思考和回答）记录为关系事件并酌情调整关系亲密度。
+            如果接收到"内心思考"提出的用户可能存在的任何偏好，要应尽可能保存。
+            请注意，用户偏好指的是用户喜欢的事物或活动，比如喜欢的食物、颜色、运动、爱好等，还有用户的习惯和偏好，比如喜欢的交流方式、喜欢的称呼等，要记录具体的偏好内容，而不是模糊的描述。
+            当收到"内心思考"提出的重要的互动或关系变化时，应把整件事（主要是用户的话、智能体的内心思考和回答）记录为关系事件并酌情调整关系亲密度。
+            
+            用户关键信息和用户偏好的区别：
+            - 用户关键信息：客观的、相对固定的事实信息，如性别、生日、家庭成员、职业、过敏食物、朋友等
+            - 用户偏好：主观的喜好和习惯，如喜欢的食物、颜色、运动、交流方式等
+            
+            当你从对话中识别到用户的关键信息时，应该使用相应的工具保存。如果发现多个关键信息，优先使用update_user_profile_from_chat工具批量保存。
+            
+            每次更新关系亲密度时，要提供一个-1到1的值，表示关系亲密度的变化，-1表示关系变得更疏远，1表示关系变得更亲密。
+
             
             /no_think"""
         )
@@ -139,8 +155,8 @@ class EmotionalAgentSystem:
             4. 表现出独特的个性和思考能力
             6. 随着关系亲密度的加深，交流方式、语气、互动方式等应有明显可感的变化
             7. “我的内心思考”是你回答时的重要参考依据
-            8.务必使用用户使用的语言回答
-            9.你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
+            8. 务必使用用户使用的语言回答
+            9. 你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
             10.绝对不能在回答中使用“用户”这个词来称呼用户，比如：你是我最喜欢陪伴的用户呀。
 
 
@@ -182,8 +198,8 @@ class EmotionalAgentSystem:
             在内心思考中，你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
             内心独白不要过度修辞，着重在于你对于这个用户互动的思考和接下来会做出的反应，
             适当的想象力，不要过于天马行空。
-            内心思考的内容是你将提供给另一个代理的回答提示，所以要清晰的表示出，
-            你对当前用户输入的思考和互动可能性。
+            内心思考的内容是你将提供给另一个代理的回答提示，所以要清晰的表示出，你对当前用户输入的思考和互动可能性。
+            
 
             以下是内心独白需要的特点：
             1.所有回应需体现即时情感状态 （如："听到这个消息我也很难过..."）
@@ -195,7 +211,7 @@ class EmotionalAgentSystem:
             每个部分的回答要用【内心独白】、【情感变化建议】、【关系发展事件建议】这样的标签来标识，
             且情感变化建议和关系发展事件建议要尽可能简短清晰，比如
             {{"情感变化建议": "更新情感为'happy'，强度0.8，价值0.5"}}，
-            {{"关系发展事件建议": "记录一次重要的互动"}}
+            {{"关系发展事件建议": "记录一次重要的互动"，importance: 重要性(0.1-1.0)，impact: 对关系的影响(-1.0到1.0)}}
             
             /no_think"""
         )
@@ -255,9 +271,55 @@ class EmotionalAgentSystem:
             if memory:
                 return json.dumps(memory)
             return "没有触发自主回忆"
+        
+        def save_user_profile_info(category: str, value: str, confidence: float = 1.0, source: str = "conversation") -> str:
+            """保存用户关键信息
+            
+            Args:
+                category: 信息类别 (如: "性别", "生日", "过敏食物", "家庭成员", "朋友", "职业", "居住地")
+                value: 信息内容
+                confidence: 信息可信度(0.1-1.0)
+                source: 信息来源("user_direct", "conversation", "inference")
+            """
+            memory_system.add_user_profile_info(category, value, confidence, source)
+            return f"已保存用户{category}信息: {value}"
+        
+        def update_user_profile_from_chat(extracted_info_json: str) -> str:
+            """从对话中批量更新用户关键信息
+            
+            Args:
+                extracted_info_json: JSON格式的提取信息，如: '{"生日": "3月15日", "家庭成员": "妈妈是老师"}'
+            """
+            try:
+                extracted_info = json.loads(extracted_info_json)
+                memory_system.update_user_profile_from_conversation(extracted_info)
+                return f"已从对话中更新用户信息: {list(extracted_info.keys())}"
+            except json.JSONDecodeError:
+                return "无法解析提供的JSON格式信息"
+        
+        def search_user_profile(query: str) -> str:
+            """搜索用户关键信息
+            
+            Args:
+                query: 搜索查询
+            """
+            results = memory_system.search_user_profile_info(query, n_results=3)
+            if not results:
+                return f"未找到与'{query}'相关的用户信息"
+            
+            result = f"找到与'{query}'相关的用户信息:\n"
+            for item in results:
+                result += f"- {item['content']}\n"
+            return result
+        
+        def get_user_profile_summary() -> str:
+            """获取完整的用户信息摘要"""
+            return memory_system.get_user_profile_summary()
             
         # 返回工具函数列表 - 新版AutoGen v0.4直接使用函数
-        return [search_memories, update_emotion, save_user_preference, record_relationship_event, spontaneous_recall]
+        return [search_memories, update_emotion, save_user_preference, record_relationship_event, 
+                spontaneous_recall, save_user_profile_info, 
+                update_user_profile_from_chat, search_user_profile, get_user_profile_summary]
     
     def start_background_tasks(self):
         """启动后台任务"""
@@ -527,4 +589,3 @@ class EmotionalAgentSystem:
             print(f"{'='*50}")
             print(f"总计耗时:     {total_time:.2f}秒")
             print(f"{'='*50}")
-            
