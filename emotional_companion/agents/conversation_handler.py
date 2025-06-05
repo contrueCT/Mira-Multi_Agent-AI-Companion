@@ -4,7 +4,6 @@
 """
 
 import json
-import random
 import time
 import asyncio
 from datetime import datetime
@@ -282,7 +281,7 @@ class ConversationCLI:
             user_input = input("\n[您] ")
             
             if user_input.lower() == "再见":
-                print("[情感陪伴] 再见！期待下次与您交流。")
+                print("[小梦] 再见！期待下次与您交流。")
                 break
             
             # 获取回复并显示时间统计
