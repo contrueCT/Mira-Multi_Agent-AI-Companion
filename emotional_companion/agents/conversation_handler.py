@@ -123,7 +123,7 @@ class ConversationHandler:
     async def _search_memory(self, user_input: str, cancellation_token) -> str:
         """搜索相关记忆（不处理用户偏好）"""
         memory_message = TextMessage(
-            content=f"请搜索与以下用户输入相关的记忆:\n{user_input}，并找出可能相关的用户偏好和关系事件。",
+            content=f"请搜索与以下用户输入相关的记忆:\n{user_input}，并获取完整的用户信息。",
             source="user"
         )
         
@@ -184,9 +184,11 @@ class ConversationHandler:
             # 根据内心思考更新情感状态和处理用户偏好
             update_message = TextMessage(
                 content=f"""根据以下内心思考，请：
-                1. 判断是否需要更新情感状态或记录关系事件
-                2. 根据内心思考的建议处理可能的用户偏好
-                
+                1. 判断是否需要更新智能体情感状态
+                2. 判断是否记录关系事件
+                3. 根据内心思考的建议处理可能的用户偏好
+                4. 记录可能的用户信息
+
                 内心思考内容:
                 {inner_thoughts}
                 
