@@ -1,0 +1,62 @@
+"""
+Web API 数据模型定义
+"""
+
+from typing import Optional, Dict, Any, List
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class ChatRequest(BaseModel):
+    """聊天请求模型"""
+    message: str
+    enable_timing: bool = False
+
+
+class ChatResponse(BaseModel):
+    """聊天响应模型"""
+    response: str
+    timestamp: datetime
+    emotional_state: Optional[Dict[str, Any]] = None
+    processing_time: Optional[float] = None
+
+
+class EmotionalState(BaseModel):
+    """情感状态模型"""
+    current_emotion: str
+    emotion_intensity: float
+    relationship_level: int
+    last_updated: Optional[datetime] = None
+
+
+class ChatHistoryItem(BaseModel):
+    """聊天历史项目"""
+    id: str
+    user_message: str
+    ai_response: str
+    timestamp: datetime
+    emotional_state: Optional[Dict[str, Any]] = None
+
+
+class ChatHistory(BaseModel):
+    """聊天历史模型"""
+    items: List[ChatHistoryItem]
+    total_count: int
+    has_more: bool
+
+
+class HealthStatus(BaseModel):
+    """健康检查模型"""
+    status: str
+    timestamp: datetime
+    version: str = "1.0.0"
+    uptime: float
+    services: Dict[str, str]
+
+
+class ErrorResponse(BaseModel):
+    """错误响应模型"""
+    error: str
+    message: str
+    timestamp: datetime
+    status_code: int

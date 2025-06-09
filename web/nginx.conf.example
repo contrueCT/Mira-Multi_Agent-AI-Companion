@@ -1,0 +1,111 @@
+# 小梦情感陪伴 - Nginx 配置示例
+
+server {
+    listen 80;
+    server_name localhost emotional-companion.local;
+    
+    # 网站根目录
+    root /path/to/emotional-companion/web;
+    index index.html;
+    
+    # 启用 gzip 压缩
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/javascript application/json text/xml application/xml application/xml+rss text/javascript;
+    
+    # 静态文件缓存
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # 主页面
+    location / {
+        try_files $uri $uri/ /index.html;
+        
+        # 安全头部
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "no-referrer-when-downgrade" always;
+        add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+    }
+    
+    # 后端API代理 (未来使用)
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # CORS 支持
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range' always;
+        
+        # 预检请求处理
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+    }
+    
+    # WebSocket支持 (未来实时通信使用)
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # 错误页面
+    error_page 404 /index.html;
+    error_page 500 502 503 504 /index.html;
+    
+    # 日志配置
+    access_log /var/log/nginx/emotional-companion.access.log;
+    error_log /var/log/nginx/emotional-companion.error.log;
+}
+
+# HTTPS 配置 (可选)
+# server {
+#     listen 443 ssl http2;
+#     server_name localhost emotional-companion.local;
+#     
+#     ssl_certificate /path/to/cert.pem;
+#     ssl_certificate_key /path/to/private.key;
+#     
+#     # SSL 优化配置
+#     ssl_session_cache shared:SSL:1m;
+#     ssl_session_timeout 10m;
+#     ssl_ciphers HIGH:!aNULL:!MD5;
+#     ssl_prefer_server_ciphers on;
+#     
+#     # 其他配置同 HTTP
+#     root /path/to/emotional-companion/web;
+#     index index.html;
+#     
+#     location / {
+#         try_files $uri $uri/ /index.html;
+#     }
+# }
+
+# HTTP 重定向到 HTTPS (可选)
+# server {
+#     listen 80;
+#     server_name emotional-companion.local;
+#     return 301 https://$server_name$request_uri;
+# }
