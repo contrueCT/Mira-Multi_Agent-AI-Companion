@@ -14,6 +14,7 @@ import time
 import os
 import asyncio
 from dotenv import load_dotenv
+from pathlib import Path
 from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 from emotional_companion.utils.conversation_logger import SimpleLogger
 
@@ -21,12 +22,20 @@ class EmotionalAgentSystem:
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):
         # 加载环境变量
         load_dotenv()
+
+        # 获取项目根目录
+        project_root = Path(__file__).parent.parent.parent
         
         # 从环境变量获取配置
         self.db_dir = os.getenv('CHROMA_DB_DIR', './memory_db')
         self.user_name = os.getenv('USER_NAME', '用户')
         self.agent_name = os.getenv('AGENT_NAME', '小梦')
         self.agent_settings = os.getenv('AGENT_DESCRIPTION', 'default')
+
+        if not os.path.isabs(self.db_dir):
+            self.db_dir = str(project_root / self.db_dir.lstrip('./'))
+        else:
+            self.db_dir = self.db_dir
         
         # 确认配置文件路径
         if not os.path.exists(config_path):
@@ -117,9 +126,8 @@ class EmotionalAgentSystem:
             4. 通过record_relationship_event工具记录关系发展事件，关系发展事件指的是让用户和智能体之间的关系变得更亲密的互动。
             5. 通过spontaneous_recall工具进行自主联想
             6. 通过save_user_profile_info工具保存用户关键信息（如性别、生日、家庭成员、过敏食物等客观事实）
-            7. 通过update_user_profile_from_chat工具批量更新从对话中提取的用户关键信息
-            8. 通过search_user_profile工具搜索特定的用户关键信息
-            9. 通过get_user_profile_summary工具获取用户信息的完整摘要
+            7. 通过search_user_profile工具搜索特定的用户关键信息
+            8. 通过get_user_profile_summary工具获取用户信息的完整摘要
 
             当前用户的名字是{self.user_name}，你要自称"小梦"，用户的称呼可以是"你"或{self.user_name}的昵称，但不要用"用户"来称呼用户。
             
@@ -129,7 +137,7 @@ class EmotionalAgentSystem:
             当收到"内心思考"提出的重要的互动或关系变化时，应把整件事（主要是用户的话、智能体的内心思考和回答）记录为关系事件并酌情调整关系亲密度。
             
             用户关键信息和用户偏好的区别：
-            - 用户关键信息：客观的、相对固定的事实信息，如性别、生日、家庭成员、职业、过敏食物、朋友等
+            - 用户关键信息：客观的、相对固定的事实信息，如性别、生日、家庭成员、职业、过敏食物、朋友、某个特殊日子等
             - 用户偏好：主观的喜好和习惯，如喜欢的食物、颜色、运动、交流方式等
             
             当你从对话中识别到用户的关键信息时，应该使用相应的工具保存。如果发现多个关键信息，优先使用update_user_profile_from_chat工具批量保存。

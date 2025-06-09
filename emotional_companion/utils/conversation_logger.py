@@ -3,7 +3,7 @@
 最小化对主要功能代码的影响
 """
 
-import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -12,7 +12,17 @@ class SimpleLogger:
     """极简对话日志记录器"""
     
     def __init__(self, log_dir: str = "logs", enable_console: bool = False):
-        self.log_dir = Path(log_dir)
+        # 如果是相对路径，转换为基于当前文件位置的绝对路径
+        if not os.path.isabs(log_dir):
+            # 获取调用者的文件位置来确定项目根目录
+            # 这里假设 SimpleLogger 在 emotional_companion 的某个子目录中
+            current_file = Path(__file__)
+            # 根据您的文件结构调整层级数
+            project_root = current_file.parent.parent.parent  # 或者适当的层级
+            self.log_dir = project_root / log_dir
+        else:
+            self.log_dir = Path(log_dir)
+            
         self.log_dir.mkdir(exist_ok=True)
         self.enable_console = enable_console
         

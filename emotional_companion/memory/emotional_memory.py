@@ -1,6 +1,6 @@
 import chromadb
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import random
 from chromadb.utils import embedding_functions
@@ -12,6 +12,8 @@ class EmotionalMemorySystem:
         
         # 初始化ChromaDB
         self.client = chromadb.PersistentClient(path=persist_directory)
+
+        print(f"✅ ChromaDB客户端已初始化，持久化目录: {persist_directory}")
 
         self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name="BAAI/bge-base-zh-v1.5",
@@ -388,7 +390,8 @@ class EmotionalMemorySystem:
         
         # 情感状态摘要
         emotional_summary = self.get_emotional_summary()
-          # 格式化输出
+        
+        # 格式化输出
         context = "## 相关记忆\n\n"
         
         if episodic_memories:
@@ -398,20 +401,24 @@ class EmotionalMemorySystem:
                 decay = memory["metadata"].get("decay_factor", 1.0)
                 importance = memory["metadata"].get("importance", 0.5)
                 if decay * importance > self.importance_threshold or full_context:
-                    # 获取时间戳并格式化
+                    # 获取时间戳并格式化 - 改进版本
                     timestamp = memory["metadata"].get("timestamp", "")
                     time_str = ""
                     if timestamp:
                         try:
                             # 解析ISO格式的时间戳
-                            from datetime import datetime
-                            dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                            time_str = f" ({dt.strftime('%m-%d %H:%M')})"
+                            dt = datetime.fromisoformat(timestamp)
+                            # 获取中文星期名称
+                            weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                            weekday_name = weekdays[dt.weekday()]
+                            # 格式化为：星期几 月-日 时:分
+                            time_str = f"[{weekday_name} {dt.strftime('%m-%d %H:%M')}] "
                         except:
-                            # 如果解析失败，直接显示原始时间戳的前16个字符
-                            time_str = f" ({timestamp[:16]})"
+                            # 如果解析失败，使用简化格式
+                            time_str = f"[{timestamp[:16]}] "
                     
-                    context += f"{i+1}. {memory['content']}{time_str}\n"
+                    # 将时间放在对话内容前面
+                    context += f"{i+1}. {time_str}{memory['content']}\n"
                     if full_context and "user_emotion" in memory["metadata"]:
                         try:
                             user_emotion = json.loads(memory["metadata"]["user_emotion"])
@@ -534,6 +541,7 @@ class EmotionalMemorySystem:
                 }],
                 documents=[profile_text]
             )
+        print(f"✅ 用户信息已添加/更新: {category} - {value} (来源: {source}, 置信度: {confidence})")
     
     def get_user_profile(self, category=None):
         """
@@ -659,3 +667,79 @@ class EmotionalMemorySystem:
                 summary += f"- {category}: {info['value']} ({confidence_desc})\n"
         
         return summary
+    
+    def get_recent_conversations(self, minutes=30, n_results=3):
+        """
+        获取最近的对话记录
+        
+        Args:
+            minutes: 限定时间范围，单位为分钟，默认过去30分钟
+            n_results: 返回的对话记录条数，默认3条
+            
+        Returns:
+            list: 最近的对话记录列表
+        """
+        try:
+            # 计算时间范围
+            time_threshold = datetime.now() - timedelta(minutes=minutes)
+            
+            # 查询最近的对话记录
+            results = self.collections["episodic"].query(
+                query_texts=["*"],  # 匹配所有对话
+                where={
+                    "timestamp": {
+                        "$gte": time_threshold.isoformat()  # 过滤条件：时间戳大于等于计算出的阈值
+                    }
+                }
+            )
+            
+            conversations = []
+            if results and "documents" in results and results["documents"]:
+                docs_list = results["documents"][0]
+                metadatas_list = results["metadatas"][0]
+                
+                for i, doc_content in enumerate(docs_list):
+                    metadata = metadatas_list[i]
+                    conversation = {
+                        "content": doc_content,
+                        "metadata": metadata
+                    }
+                    conversations.append(conversation)
+            
+            return conversations
+        
+        except Exception as e:
+            print(f"获取最近对话记录失败: {e}")
+            return []
+    
+    def get_recent_conversations(self, minutes=30, limit=3):
+        """获取指定时间范围内最近的对话记录"""
+        try:
+            # 计算时间阈值
+            time_threshold = datetime.now() - timedelta(minutes=minutes)
+            # 获取所有情节记忆
+            all_memories = self.get_recent_conversations(minutes=minutes, limit=limit)
+
+            if not all_memories or not all_memories["metadatas"]:
+                return []
+            
+            # 筛选指定时间内的记忆并按时间排序
+            recent_memories = []
+            for i, metadata in enumerate(all_memories["metadatas"]):
+                if metadata and metadata.get("timestamp"):
+                    memory_time = datetime.fromisoformat(metadata["timestamp"])
+                    if memory_time >= time_threshold:
+                        recent_memories.append({
+                            "content": all_memories["documents"][i],
+                            "metadata": metadata,
+                            "id": all_memories["ids"][i],
+                            "timestamp": memory_time
+                        })
+            
+            # 按时间倒序排序，取最近的N条
+            recent_memories.sort(key=lambda x: x["timestamp"], reverse=True)
+            return recent_memories[:limit]
+            
+        except Exception as e:
+            print(f"获取最近对话记录失败: {e}")
+            return []

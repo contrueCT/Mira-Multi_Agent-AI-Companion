@@ -18,6 +18,8 @@ class ConversationHandler:
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):
         """初始化对话处理器"""
         self.agent_system = EmotionalAgentSystem(config_path)
+        self.is_first_conversation = True  # 跟踪是否是应用启动后的首次对话
+        self.last_agent_response = None    # 保存上一次智能体的回复
         
     async def get_response(self, user_message: str, enable_timing=False) -> str:
         """
@@ -103,11 +105,14 @@ class ConversationHandler:
         
         # 记录智能体回答
         self.agent_system.logger.step("response", response)
-        
-        # 4. 异步保存记忆和更新状态（不等待完成）
+          # 4. 异步保存记忆和更新状态（不等待完成）
         asyncio.create_task(self._save_and_update_async(
             user_input, response, emotion_data, inner_thoughts, cancellation_token
         ))
+        
+        # 5. 更新对话状态
+        self.last_agent_response = response
+        self.is_first_conversation = False
         
         return response
     
@@ -122,16 +127,31 @@ class ConversationHandler:
         return emotion_response.chat_message.content if emotion_response.chat_message else "{}"
     async def _search_memory(self, user_input: str, cancellation_token) -> str:
         """搜索相关记忆（不处理用户偏好）"""
-        memory_message = TextMessage(
-            content=f"请搜索与以下用户输入相关的记忆:\n{user_input}，并获取完整的用户信息。",
-            source="user"
-        )
+        # 获取当前时间信息
+        current_time = datetime.now()
+        time_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+        weekday = current_time.strftime("%A")  # 星期几
         
+        memory_message = TextMessage(
+        content=f"""请搜索与以下用户输入相关的记忆，并获取完整的用户信息。
+
+                    用户输入: {user_input}
+
+                    当前时间信息:
+                    - 日期时间: {time_str}
+                    - 星期: {weekday}
+
+                    请在搜索记忆时考虑时间因素，如果用户提到时间相关的内容（如"昨天"、"上周"、"最近"等），请结合当前时间进行准确的记忆检索。""",
+        source="user"
+                        )
         memory_response = await self.agent_system.memory_manager.on_messages([memory_message], cancellation_token)
         return memory_response.chat_message.content if memory_response.chat_message else "无相关记忆"
     
     async def _generate_thoughts(self, user_input: str, emotion_data: dict, context_result: str, cancellation_token) -> str:
         """生成内心思考"""
+        # 获取思考专用的上下文
+        thinking_context = self._get_thinking_context()
+        
         thought_message = TextMessage(
             content=f"""请思考以下用户输入和上下文，生成一段内心独白，并建议适当的情感变化:
             
@@ -140,6 +160,9 @@ class ConversationHandler:
             
             记忆上下文:
             {context_result}
+            
+            对话上下文:
+            {thinking_context}
             
             当前关系亲密度: {self.agent_system.memory_system.emotional_state['relationship_level']}/10""",
             source="user"
@@ -151,8 +174,10 @@ class ConversationHandler:
     async def _generate_response(self, user_input: str, context_result: str, inner_thoughts: str, cancellation_token) -> str:
         """生成最终回复"""
         companion_message = TextMessage(
-            content=f"""请根据以下信息，以自然、情感化的方式回应用户:
-            
+            content=f"""请根据以下信息，以自然、情感化的方式回应用户，
+            如果用户提到了时间相关的话，请结合当前时间和记忆上下文的时间进行回应，
+            提供的记忆上下文可能包含一些无关的内容，请仔细甄别使用，不要混淆。:
+
             用户输入: {user_input}
             
             记忆上下文:
@@ -164,7 +189,7 @@ class ConversationHandler:
             当前情绪: {self.agent_system.memory_system.emotional_state['current_emotion']}
             情绪强度: {self.agent_system.memory_system.emotional_state['emotion_intensity']}
             关系亲密度: {self.agent_system.memory_system.emotional_state['relationship_level']}/10
-            当前时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}""",
+            当前时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} 星期{['一', '二', '三', '四', '五', '六', '日'][datetime.now().weekday()]}""",
             source="user"
         )
         
@@ -184,10 +209,11 @@ class ConversationHandler:
             # 根据内心思考更新情感状态和处理用户偏好
             update_message = TextMessage(
                 content=f"""根据以下内心思考，请：
-                1. 判断是否需要更新智能体情感状态
-                2. 判断是否记录关系事件
-                3. 根据内心思考的建议处理可能的用户偏好
-                4. 记录可能的用户信息
+                1. 判断是否需要更新智能体情感状态（使用update_emotion）
+                2. 判断是否记录关系事件（record_relationship_event）
+                3. 根据内心思考的建议处理可能的用户偏好（save_user_preference）
+                4. 记录可能的用户信息（save_user_profile_info），用户信息也包括上下班时间这些日常时间，假如用户提到时间相关的内容（如"昨天"、"上周"、"最近"等），
+                   请结合当前时间记录具体的时间，比如用户说明天下午要考试，当前时间是2025-06-09，星期一，你就要记录用户的考试时间为2025-06-10，星期二下午。
 
                 内心思考内容:
                 {inner_thoughts}
@@ -257,7 +283,21 @@ class ConversationHandler:
     def stop_background_tasks(self):
         """停止后台任务"""
         self.agent_system.autonomous_mode = False
-
+    def _get_thinking_context(self) -> str:
+        """获取内心思考的上下文"""
+        try:
+            if self.is_first_conversation:
+                # 应用刚启动，首次对话
+                return "这是应用启动后的第一次对话。"
+            else:
+                # 已经进行过对话，使用上一次智能体的回复
+                if self.last_agent_response:
+                    return f"我上一次对用户的回复: {self.last_agent_response}"
+                else:
+                    return "这是我们本次会话的第一次对话。"
+        except Exception as e:
+            return f"获取上下文时出错: {str(e)}"
+    
 
 # 简化的CLI接口
 class ConversationCLI:

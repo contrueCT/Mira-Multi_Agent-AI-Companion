@@ -13,10 +13,20 @@ async def main():
     parser.add_argument("--memory-db", type=str, default="memory_db",
                         help="记忆数据库存储路径")
     args = parser.parse_args()
+
+        # 获取项目根目录
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)  # 上一级目录
+    
+    # 如果配置文件路径是相对路径，则相对于项目根目录
+    if not os.path.isabs(args.config):
+        config_path = os.path.join(project_root, args.config)
+    else:
+        config_path = args.config
     
     # 确认配置文件存在
-    if not os.path.exists(args.config):
-        print(f"错误: 配置文件不存在: {args.config}")
+    if not os.path.exists(config_path):
+        print(f"错误: 配置文件不存在: {config_path}")
         print("请创建配置文件或使用--config指定正确的路径")
         return
     
@@ -34,7 +44,7 @@ async def main():
     
     # 启动对话系统
     try:
-        cli = ConversationCLI(config_path=args.config)
+        cli = ConversationCLI(config_path=config_path)
         await cli.run()
     except KeyboardInterrupt:
         print("\n程序已中断。期待下次与您交流！")
