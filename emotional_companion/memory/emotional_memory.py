@@ -613,6 +613,37 @@ class EmotionalMemorySystem:
                 source="conversation"
             )
     
+    def delete_user_profile_info(self, category):
+        """
+        删除用户关键信息
+        
+        Args:
+            category: 要删除的信息类别 (如: "性别", "生日", "过敏食物")
+            
+        Returns:
+            bool: 删除是否成功
+        """
+        try:
+            # 查询指定类别的所有记录
+            results = self.collections["user_profile"].get(
+                where={"category": category}
+            )
+            
+            if results and "ids" in results and results["ids"]:
+                # 删除所有匹配的记录
+                self.collections["user_profile"].delete(
+                    ids=results["ids"]
+                )
+                print(f"✅ 已删除用户信息类别: {category} ({len(results['ids'])}条记录)")
+                return True
+            else:
+                print(f"⚠️ 未找到类别为'{category}'的用户信息")
+                return False
+                
+        except Exception as e:
+            print(f"❌ 删除用户信息失败: {e}")
+            return False
+
     def search_user_profile_info(self, query, n_results=5):
         """
         搜索用户关键信息
