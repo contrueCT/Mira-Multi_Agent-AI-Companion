@@ -99,9 +99,7 @@ class EmotionalChatApp {
     setupTypingEffect() {
         // 为机器人消息添加打字效果的基础设置
         this.typingSpeed = 30; // 毫秒/字符
-    }
-
-    async sendMessage() {
+    }    async sendMessage() {
         const message = this.messageInput.value.trim();
         if (!message || this.isLoading) return;
 
@@ -114,15 +112,15 @@ class EmotionalChatApp {
         this.updateSendButton();
         this.messageInput.style.height = 'auto';
 
-        // 显示加载状态
-        this.showLoading();
+        // 显示"正在输入"状态
+        this.showTypingIndicator();
 
         try {
             // 调用后端API（暂时模拟）
             const response = await this.callChatAPI(message);
             
-            // 隐藏加载状态
-            this.hideLoading();
+            // 隐藏"正在输入"状态
+            this.hideTypingIndicator();
             
             // 添加机器人回复
             await this.addBotMessage(response.reply, response.emotionalState);
@@ -132,7 +130,7 @@ class EmotionalChatApp {
             
         } catch (error) {
             console.error('发送消息失败:', error);
-            this.hideLoading();
+            this.hideTypingIndicator();
             this.showErrorToast('消息发送失败，请稍后再试～');
             
             // 添加错误回复
@@ -331,18 +329,39 @@ class EmotionalChatApp {
         this.updateCharCount();
         this.updateSendButton();
         this.hideEmojiPicker();
-    }
-
-    showLoading() {
+    }    showTypingIndicator() {
         this.isLoading = true;
-        this.loadingOverlay.classList.add('show');
         this.updateSendButton();
+        
+        // 创建"正在输入"消息元素
+        this.typingMessage = this.createMessageElement('bot', '');
+        this.typingMessage.classList.add('typing-indicator');
+        
+        const bubbleElement = this.typingMessage.querySelector('.message-bubble');
+        bubbleElement.innerHTML = `
+            <div class="typing-dots">
+                <span class="typing-text">小梦正在输入</span>
+                <div class="dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        `;
+        
+        this.chatMessages.appendChild(this.typingMessage);
+        this.scrollToBottom();
     }
 
-    hideLoading() {
+    hideTypingIndicator() {
         this.isLoading = false;
-        this.loadingOverlay.classList.remove('show');
         this.updateSendButton();
+        
+        // 移除"正在输入"消息
+        if (this.typingMessage && this.typingMessage.parentNode) {
+            this.typingMessage.parentNode.removeChild(this.typingMessage);
+            this.typingMessage = null;
+        }
     }
 
     showErrorToast(message) {
