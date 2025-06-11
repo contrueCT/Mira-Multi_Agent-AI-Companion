@@ -51,3 +51,6 @@ dev-note/devTarget.md
 # 测试
 test_memory_db/
 .github/copilot-instructions.md
+
+# 客户端静态库
+mira-desktop/node_modules/

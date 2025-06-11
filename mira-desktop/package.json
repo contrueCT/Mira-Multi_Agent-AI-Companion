@@ -6,8 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "dev": "electron . --dev",
-    "install": "npm install"
+    "dev": "electron . --dev"
   },
   "dependencies": {
     "electron": "^27.0.0"
