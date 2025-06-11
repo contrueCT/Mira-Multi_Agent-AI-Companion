@@ -644,6 +644,37 @@ class EmotionalMemorySystem:
             print(f"❌ 删除用户信息失败: {e}")
             return False
 
+    def delete_user_preference(self, category):
+        """
+        删除用户偏好
+        
+        Args:
+            category: 要删除的偏好类别 (如: "食物", "颜色", "运动", "活动")
+            
+        Returns:
+            bool: 删除是否成功
+        """
+        try:
+            # 查询指定类别的所有偏好记录
+            results = self.collections["preferences"].get(
+                where={"category": category}
+            )
+            
+            if results and "ids" in results and results["ids"]:
+                # 删除所有匹配的记录
+                self.collections["preferences"].delete(
+                    ids=results["ids"]
+                )
+                print(f"✅ 已删除用户偏好类别: {category} ({len(results['ids'])}条记录)")
+                return True
+            else:
+                print(f"⚠️ 未找到类别为'{category}'的用户偏好")
+                return False
+                
+        except Exception as e:
+            print(f"❌ 删除用户偏好失败: {e}")
+            return False
+
     def search_user_profile_info(self, query, n_results=5):
         """
         搜索用户关键信息

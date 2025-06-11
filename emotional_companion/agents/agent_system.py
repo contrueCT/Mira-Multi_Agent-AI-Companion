@@ -113,12 +113,11 @@ class EmotionalAgentSystem:
             返回格式为JSON：{'emotion': '情绪名称', 'intensity': 0.1-1.0, 'valence': -1.0-1.0}
             valence表示情感的正负性，正值表示积极情绪，负值表示消极情绪。/no_think"""
         )
-        
-        # 创建记忆管理代理
+          # 创建记忆管理代理
         self.memory_manager = AssistantAgent(
             name="memory_manager",
             model_client=self.light_client,
-            tools=memory_tools,  # 新版API直接传入工具函数列表            
+            tools=memory_tools,  # 新版API直接传入工具函数列表
             system_message="""你是一个记忆管理专家。你负责：
             1. 通过search_memories工具搜索与当前交互相关的过去记忆
             2. 通过update_emotion工具更新智能体的情感状态，请注意：这里的情感状态是指智能体的情感状态，而不是用户的情感状态，在你提供信息的时候也要表明这是智能体的情感状态。
@@ -129,6 +128,7 @@ class EmotionalAgentSystem:
             7. 通过search_user_profile工具搜索特定的用户关键信息
             8. 通过get_user_profile_summary工具获取用户信息的完整摘要
             9. 通过delete_user_profile_info工具删除用户关键信息（当用户明确要求删除某些个人信息时使用）
+            10. 通过delete_user_preference工具删除用户偏好（当用户明确要求删除某些偏好信息时使用）
 
             当前用户的名字是{self.user_name}，你要自称"小梦"，用户的称呼可以是"你"或{self.user_name}的昵称，但不要用"用户"来称呼用户。
             
@@ -315,11 +315,11 @@ class EmotionalAgentSystem:
             results = memory_system.search_user_profile_info(query, n_results=3)
             if not results:
                 return f"未找到与'{query}'相关的用户信息"
-            
-            result = f"找到与'{query}'相关的用户信息:\n"
+                result = f"找到与'{query}'相关的用户信息:\n"
             for item in results:
                 result += f"- {item['content']}\n"
             return result
+        
         def get_user_profile_summary() -> str:
             """获取完整的用户信息摘要"""
             return memory_system.get_user_profile_summary()
@@ -335,11 +335,23 @@ class EmotionalAgentSystem:
                 return f"已成功删除用户{category}信息"
             else:
                 return f"未找到类别为'{category}'的用户信息，删除失败"
+        
+        def delete_user_preference(category: str) -> str:
+            """删除用户偏好
+            
+            Args:
+                category: 要删除的偏好类别 (如: "食物", "颜色", "运动", "活动", "交流方式")
+            """
+            success = memory_system.delete_user_preference(category)
+            if success:
+                return f"已成功删除用户{category}偏好"
+            else:
+                return f"未找到类别为'{category}'的用户偏好，删除失败"
             
         # 返回工具函数列表 - 新版AutoGen v0.4直接使用函数
         return [search_memories, update_emotion, save_user_preference, record_relationship_event, 
                 spontaneous_recall, save_user_profile_info, 
-                update_user_profile_from_chat, search_user_profile, get_user_profile_summary, delete_user_profile_info]
+                update_user_profile_from_chat, search_user_profile, get_user_profile_summary, delete_user_profile_info, delete_user_preference]
     
     def start_background_tasks(self):
         """启动后台任务"""
