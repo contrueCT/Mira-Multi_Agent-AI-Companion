@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小梦情感陪伴</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 背景装饰 -->
+    <div class="background-decoration">
+        <div class="floating-bubble"></div>
+        <div class="floating-bubble"></div>
+        <div class="floating-bubble"></div>
+        <div class="floating-heart"></div>
+        <div class="floating-heart"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="chat-container">
+        <!-- 顶部标题栏 -->
+        <div class="chat-header">
+            <div class="avatar-container">
+                <div class="avatar">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="status-indicator online"></div>
+            </div>
+            <div class="header-info">
+                <h1 class="chat-title">小梦</h1>
+                <p class="chat-subtitle" id="emotionalStatus">心情愉悦 | 亲密度 8/10</p>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="settingsBtn" title="设置">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="header-btn" id="historyBtn" title="聊天记录">
+                    <i class="fas fa-history"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 聊天区域 -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- 欢迎消息 -->
+            <div class="message bot-message welcome-message">
+                <div class="message-avatar">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble">
+                        <p>你好呀！我是小梦～很开心能够陪伴在你身边！💖</p>
+                        <p>今天想和我聊什么呢？</p>
+                    </div>
+                    <div class="message-time">刚刚</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="chat-input-container">
+            <div class="input-wrapper">
+                <div class="input-group">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="和小梦说点什么吧..." 
+                        rows="1"
+                        maxlength="1000"></textarea>
+                    <div class="input-actions">
+                        <button class="emoji-btn" id="emojiBtn" title="表情">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                        <button class="send-btn" id="sendBtn" title="发送">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count">0/1000</span>
+                    <span class="input-hint">按 Enter 发送，Shift+Enter 换行</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-heart">
+                <i class="fas fa-heart"></i>
+            </div>
+            <p>小梦正在思考...</p>
+        </div>
+    </div>
+
+    <!-- 表情选择器 -->
+    <div class="emoji-picker" id="emojiPicker">
+        <div class="emoji-grid">
+            <span class="emoji-item">😊</span>
+            <span class="emoji-item">😄</span>
+            <span class="emoji-item">😆</span>
+            <span class="emoji-item">🥰</span>
+            <span class="emoji-item">😘</span>
+            <span class="emoji-item">🤗</span>
+            <span class="emoji-item">😍</span>
+            <span class="emoji-item">🥺</span>
+            <span class="emoji-item">😢</span>
+            <span class="emoji-item">😭</span>
+            <span class="emoji-item">😤</span>
+            <span class="emoji-item">🤔</span>
+            <span class="emoji-item">💕</span>
+            <span class="emoji-item">💖</span>
+            <span class="emoji-item">💝</span>
+            <span class="emoji-item">🌸</span>
+            <span class="emoji-item">🌺</span>
+            <span class="emoji-item">🦄</span>
+            <span class="emoji-item">🌈</span>
+            <span class="emoji-item">⭐</span>
+        </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="error-toast" id="errorToast">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span class="error-message">发生了一些小问题，请稍后再试～</span>
+    </div>
+
+    <script src="js/chat.js"></script>
+</body>
+</html>
