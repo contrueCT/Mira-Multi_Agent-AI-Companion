@@ -22,6 +22,8 @@ class EmotionalChatApp {
         } else {
             this.initBrowserMode()
         }
+
+        this.bindTitlebarEvents()
     }
 
     async initElectronMode() {
@@ -61,6 +63,38 @@ class EmotionalChatApp {
         
         this.initializeAPI()
     }
+
+    bindTitlebarEvents() {
+    if (this.isElectron) {
+        // 最小化按钮
+        document.getElementById('minimizeBtn').addEventListener('click', () => {
+            window.electronAPI.windowMinimize()
+        })
+
+        // 最大化/还原按钮
+        document.getElementById('maximizeBtn').addEventListener('click', async () => {
+            const isMaximized = await window.electronAPI.windowMaximize()
+            const icon = document.getElementById('maximizeIcon')
+            icon.className = isMaximized ? 'fas fa-clone' : 'fas fa-square'
+        })
+
+        // 关闭按钮
+        document.getElementById('closeBtn').addEventListener('click', () => {
+            window.electronAPI.windowClose()
+        })
+
+        // 初始化最大化按钮状态
+        this.updateMaximizeButton()
+    }
+}
+
+async updateMaximizeButton() {
+    if (this.isElectron) {
+        const isMaximized = await window.electronAPI.windowIsMaximized()
+        const icon = document.getElementById('maximizeIcon')
+        icon.className = isMaximized ? 'fas fa-clone' : 'fas fa-square'
+    }
+}
 
     init() {
         // DOM 元素引用

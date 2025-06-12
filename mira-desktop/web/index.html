@@ -11,77 +11,98 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <!-- 背景装饰 -->
-    <div class="background-decoration">
-        <div class="floating-bubble"></div>
-        <div class="floating-bubble"></div>
-        <div class="floating-bubble"></div>
-        <div class="floating-heart"></div>
-        <div class="floating-heart"></div>
-    </div>
-
-    <!-- 主容器 -->
-    <div class="chat-container">
-        <!-- 顶部标题栏 -->
-        <div class="chat-header">
-            <div class="avatar-container">
-                <div class="avatar">
-                    <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
-                </div>
-                <div class="status-indicator online"></div>
+    <!-- 应用主容器 - 新增包装器 -->
+    <div class="app-container">
+        <!-- 自定义标题栏 -->
+        <div class="custom-titlebar">
+            <div class="titlebar-content">
+                <div class="titlebar-title">小梦情感陪伴</div>
             </div>
-            <div class="header-info">
-                <h1 class="chat-title">小梦</h1>
-                <p class="chat-subtitle" id="emotionalStatus">心情愉悦 | 亲密度 8/10</p>
-            </div>
-            <div class="header-actions">
-                <button class="header-btn" id="settingsBtn" title="设置">
-                    <i class="fas fa-cog"></i>
+            <div class="titlebar-controls">
+                <button class="titlebar-btn minimize-btn" id="minimizeBtn" title="最小化">
+                    <i class="fas fa-minus"></i>
                 </button>
-                <button class="header-btn" id="historyBtn" title="聊天记录">
-                    <i class="fas fa-history"></i>
+                <button class="titlebar-btn maximize-btn" id="maximizeBtn" title="最大化">
+                    <i class="fas fa-square" id="maximizeIcon"></i>
+                </button>
+                <button class="titlebar-btn close-btn" id="closeBtn" title="关闭">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
         </div>
 
-        <!-- 聊天区域 -->
-        <div class="chat-messages" id="chatMessages">
-            <!-- 欢迎消息 -->
-            <div class="message bot-message welcome-message">
-                <div class="message-avatar">
-                    <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
-                </div>
-                <div class="message-content">
-                    <div class="message-bubble">
-                        <p>你好呀！我是小梦～很开心能够陪伴在你身边！💖</p>
-                        <p>今天想和我聊什么呢？</p>
-                    </div>
-                    <div class="message-time">刚刚</div>
-                </div>
-            </div>
+        <!-- 背景装饰 -->
+        <div class="background-decoration">
+            <div class="floating-bubble"></div>
+            <div class="floating-bubble"></div>
+            <div class="floating-bubble"></div>
+            <div class="floating-heart">💝</div>
+            <div class="floating-heart">💕</div>
         </div>
 
-        <!-- 输入区域 -->
-        <div class="chat-input-container">
-            <div class="input-wrapper">
-                <div class="input-group">
-                    <textarea 
-                        id="messageInput" 
-                        placeholder="和小梦说点什么吧..." 
-                        rows="1"
-                        maxlength="1000"></textarea>
-                    <div class="input-actions">
-                        <button class="emoji-btn" id="emojiBtn" title="表情">
-                            <i class="fas fa-smile"></i>
-                        </button>
-                        <button class="send-btn" id="sendBtn" title="发送">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+        <!-- 主容器 -->
+        <div class="chat-container">
+            <!-- 顶部标题栏 -->
+            <div class="chat-header">
+                <div class="avatar-container">
+                    <div class="avatar">
+                        <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
+                    </div>
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="header-info">
+                    <h1 class="chat-title">小梦</h1>
+                    <p class="chat-subtitle" id="emotionalStatus">心情愉悦 | 亲密度 8/10</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" id="settingsBtn" title="设置">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="header-btn" id="historyBtn" title="聊天记录">
+                        <i class="fas fa-history"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 聊天区域 -->
+            <div class="chat-messages" id="chatMessages">
+                <!-- 欢迎消息 -->
+                <div class="message bot-message welcome-message">
+                    <div class="message-avatar">
+                        <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <p>你好呀！我是小梦～很开心能够陪伴在你身边！💖</p>
+                            <p>今天想和我聊什么呢？</p>
+                        </div>
+                        <div class="message-time">刚刚</div>
                     </div>
                 </div>
-                <div class="input-footer">
-                    <span class="char-count">0/1000</span>
-                    <span class="input-hint">按 Enter 发送，Shift+Enter 换行</span>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <div class="input-group">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="和小梦说点什么吧..." 
+                            rows="1"
+                            maxlength="1000"></textarea>
+                        <div class="input-actions">
+                            <button class="emoji-btn" id="emojiBtn" title="表情">
+                                <i class="fas fa-smile"></i>
+                            </button>
+                            <button class="send-btn" id="sendBtn" title="发送">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="input-footer">
+                        <span class="char-count">0/1000</span>
+                        <span class="input-hint">按 Enter 发送，Shift+Enter 换行</span>
+                    </div>
                 </div>
             </div>
         </div>

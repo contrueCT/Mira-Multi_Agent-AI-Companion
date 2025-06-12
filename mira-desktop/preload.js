@@ -13,11 +13,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
         electron: process.versions.electron
     },
     
-    // 基础配置管理（为后续扩展预留）
+    // 基础配置管理
     getConfig: () => ipcRenderer.invoke('get-config'),
     setConfig: (key, value) => ipcRenderer.invoke('set-config', key, value),
     
-    // 事件监听（为后续扩展预留）
+    // 窗口控制
+    windowMinimize: () => ipcRenderer.invoke('window-minimize'),
+    windowMaximize: () => ipcRenderer.invoke('window-maximize'),
+    windowClose: () => ipcRenderer.invoke('window-close'),
+    windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+    
+    // 事件监听
     onConfigChanged: (callback) => {
         ipcRenderer.on('config-changed', (event, data) => callback(data))
     },

@@ -45,7 +45,7 @@ function createWindow() {
     // 加载配置
     loadConfig()
 
-        // 构建图标路径
+    // 构建图标路径
     let iconPath;
     if (process.platform === 'win32') {
         iconPath = path.join(__dirname, 'assets/icon.ico');
@@ -55,23 +55,39 @@ function createWindow() {
         iconPath = path.join(__dirname, 'assets/icon.png');
     }
     
+    // 检查图标文件是否存在
+    if (!fs.existsSync(iconPath)) {
+        iconPath = path.join(__dirname, 'assets/icon.png');
+        if (!fs.existsSync(iconPath)) {
+            console.warn('⚠️ 图标文件不存在:', iconPath);
+            iconPath = undefined;
+        }
+    }
+    
     mainWindow = new BrowserWindow({
         width: config.windowBounds.width,
         height: config.windowBounds.height,
         minWidth: 800,
         minHeight: 600,
+        frame: false, // 无边框窗口
+        transparent: true, // 透明窗口
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         },
-        icon: path.join(__dirname, 'assets/icon.png'),
-        autoHideMenuBar: true,
-        titleBarStyle: 'default'
+        icon: iconPath,
+        titleBarStyle: 'hidden', // 隐藏标题栏
+        show: false // 先不显示，等加载完成后再显示
     })
 
     // 加载前端页面
     mainWindow.loadFile('web/index.html')
+
+    // 页面加载完成后显示窗口
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.show()
+    })
 
     // 开发时打开调试工具
     if (process.argv.includes('--dev')) {
@@ -104,6 +120,28 @@ ipcMain.handle('set-config', (event, key, value) => {
     // 通知渲染进程配置已更改
     mainWindow.webContents.send('config-changed', { key, value })
     return true
+})
+
+// 窗口控制IPC处理
+ipcMain.handle('window-minimize', () => {
+    mainWindow.minimize()
+})
+
+ipcMain.handle('window-maximize', () => {
+    if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize()
+    } else {
+        mainWindow.maximize()
+    }
+    return mainWindow.isMaximized()
+})
+
+ipcMain.handle('window-close', () => {
+    mainWindow.close()
+})
+
+ipcMain.handle('window-is-maximized', () => {
+    return mainWindow.isMaximized()
 })
 
 // 应用准备就绪

@@ -5,26 +5,114 @@
     box-sizing: border-box;
 }
 
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent; /* 改为透明 */
+}
+
 body {
     font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 8px; /* 为圆角和阴影留出空间 */
+}
+
+.app-container {
+    width: 100%;
+    height: 100%;
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-    min-height: 100vh;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ===== 自定义标题栏 ===== */
+.custom-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 32px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    color: white;
+    padding: 0 8px;
+    -webkit-app-region: drag; /* 可拖拽区域 */
+    -webkit-user-select: none; /* Safari兼容性 */
+    -moz-user-select: none;    /* Firefox兼容性 */
+    -ms-user-select: none;     /* IE/Edge兼容性 */
+    user-select: none;         /* 标准属性 */
+    position: relative;
+    z-index: 1000;
+    border-radius: 16px 16px 0 0; /* 只给顶部添加圆角 */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.titlebar-content {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    overflow-x: hidden;
+}
+
+.titlebar-title {
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.titlebar-controls {
+    display: flex;
+    -webkit-app-region: no-drag; /* 按钮区域不可拖拽 */
+}
+
+.titlebar-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: background-color 0.2s ease;
+    border-radius: 6px; /* 给按钮添加小圆角 */
+}
+
+.titlebar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.close-btn:hover {
+    background: #e74c3c !important;
+}
+
+.maximize-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.minimize-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 /* ===== 背景装饰 ===== */
 .background-decoration {
-    position: fixed;
-    top: 0;
+    position: absolute; /* 改为absolute，相对于body定位 */
+    top: 0; /* 从顶部开始 */
     left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: -1;
+    z-index: 0; /* 确保在最底层 */
+    border-radius: 16px; /* 与body保持一致的圆角 */
+    overflow: hidden; /* 确保子元素不会超出圆角边界 */
 }
 
 .floating-bubble {
@@ -66,7 +154,7 @@ body {
 }
 
 .floating-heart:nth-child(4) {
-    top: 30%;
+    top: 35%; /* 调整位置，避免被标题栏覆盖 */
     right: 20%;
     animation-delay: 1s;
 }
@@ -89,18 +177,19 @@ body {
 
 /* ===== 主容器 ===== */
 .chat-container {
-    width: 90%;
-    max-width: 800px;
-    height: 90vh;
+    flex: 1;
     background: rgba(255, 255, 255, 0.95);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
-    border-radius: 24px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border-radius: 0 0 16px 16px; /* 只保留底部圆角 */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    z-index: 1;
+    margin: 0; /* 移除margin */
+    border: none; /* 移除border */
+    box-shadow: none; /* 移除内部阴影 */
 }
 
 .chat-container::before {
@@ -113,6 +202,7 @@ body {
     background: linear-gradient(135deg, rgba(255, 154, 158, 0.1) 0%, rgba(254, 207, 239, 0.1) 100%);
     pointer-events: none;
     z-index: 0;
+    border-radius: 0 0 12px 12px; /* 确保渐变也有圆角 */
 }
 
 /* ===== 顶部标题栏 ===== */
@@ -123,7 +213,8 @@ body {
     background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
     color: white;
     position: relative;
-    z-index: 1;
+    z-index: 2; /* 确保在背景装饰之上 */
+    border-radius: 0; /* 与标题栏连接，不需要圆角 */
 }
 
 .avatar-container {
@@ -143,6 +234,7 @@ body {
     font-size: 24px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3); /* 给头像添加微妙的边框 */
 }
 
 .avatar-img {
@@ -173,6 +265,7 @@ body {
     height: 14px;
     border-radius: 50%;
     border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 给状态指示器添加阴影 */
 }
 
 .status-indicator.online {
@@ -214,18 +307,20 @@ body {
     border: none;
     background: rgba(255, 255, 255, 0.2);
     color: white;
-    border-radius: 12px;
+    border-radius: 12px; /* 增加按钮圆角 */
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1); /* 添加微妙边框 */
 }
 
 .header-btn:hover {
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 悬停时添加阴影 */
 }
 
 /* ===== 聊天消息区域 ===== */
@@ -239,17 +334,19 @@ body {
 }
 
 .chat-messages::-webkit-scrollbar {
-    width: 6px;
+    width: 8px; /* 稍微增加滚动条宽度 */
 }
 
 .chat-messages::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.05);
-    border-radius: 3px;
+    border-radius: 4px; /* 给滚动条轨道添加圆角 */
+    margin: 4px; /* 添加边距 */
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
     background: rgba(255, 107, 107, 0.3);
-    border-radius: 3px;
+    border-radius: 4px; /* 滚动条滑块圆角 */
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
@@ -283,6 +380,7 @@ body {
     font-size: 18px;
     margin-right: 12px;
     flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.2); /* 给消息头像添加边框 */
 }
 
 .message-content {
@@ -292,11 +390,12 @@ body {
 
 .message-bubble {
     padding: 16px 20px;
-    border-radius: 20px;
+    border-radius: 20px; /* 增加消息气泡圆角 */
     line-height: 1.5;
     font-size: 15px;
     position: relative;
     word-wrap: break-word;
+    border: 1px solid rgba(255, 255, 255, 0.1); /* 给消息气泡添加微妙边框 */
 }
 
 .message-time {
@@ -326,6 +425,7 @@ body {
     color: #333;
     border: 1px solid rgba(255, 107, 107, 0.1);
     position: relative;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.05); /* 添加微妙阴影 */
 }
 
 .bot-message .message-bubble::before {
@@ -373,6 +473,7 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     position: relative;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15); /* 添加微妙阴影 */
 }
 
 .user-message .message-bubble::before {
@@ -396,6 +497,7 @@ body {
     background: linear-gradient(135deg, #ffefef 0%, #fff5ff 100%);
     border: 2px solid rgba(255, 107, 107, 0.2);
     box-shadow: 0 4px 15px rgba(255, 107, 107, 0.1);
+    border-radius: 24px; /* 欢迎消息更大的圆角 */
 }
 
 /* ===== 输入区域 ===== */
@@ -405,19 +507,21 @@ body {
     border-top: 1px solid rgba(255, 107, 107, 0.1);
     position: relative;
     z-index: 1;
+    border-radius: 0 0 12px 12px; /* 底部圆角 */
 }
 
 .input-wrapper {
     background: white;
-    border-radius: 16px;
+    border-radius: 20px; /* 增加输入框圆角 */
     border: 2px solid rgba(255, 107, 107, 0.1);
     transition: all 0.3s ease;
     overflow: hidden;
+    box-shadow: 0 2px 12px rgba(255, 107, 107, 0.05); /* 添加微妙阴影 */
 }
 
 .input-wrapper:focus-within {
     border-color: #ff6b6b;
-    box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1), 0 4px 20px rgba(255, 107, 107, 0.1);
 }
 
 .input-group {
@@ -455,7 +559,7 @@ body {
     width: 40px;
     height: 40px;
     border: none;
-    border-radius: 12px;
+    border-radius: 14px; /* 增加按钮圆角 */
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -467,16 +571,19 @@ body {
 .emoji-btn {
     background: rgba(255, 107, 107, 0.1);
     color: #ff6b6b;
+    border: 1px solid rgba(255, 107, 107, 0.1);
 }
 
 .emoji-btn:hover {
     background: rgba(255, 107, 107, 0.2);
     transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
 }
 
 .send-btn {
     background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .send-btn:hover:not(:disabled) {
@@ -523,6 +630,7 @@ body {
     z-index: 1000;
     -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
+    border-radius: 16px; /* 配合body圆角 */
 }
 
 .loading-overlay.show {
@@ -532,9 +640,10 @@ body {
 .loading-spinner {
     background: white;
     padding: 40px;
-    border-radius: 20px;
+    border-radius: 24px; /* 增加加载指示器圆角 */
     text-align: center;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .spinner-heart {
@@ -561,7 +670,7 @@ body {
     bottom: 120px;
     right: 24px;
     background: white;
-    border-radius: 16px;
+    border-radius: 20px; /* 增加表情选择器圆角 */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     padding: 16px;
     display: none;
@@ -599,7 +708,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 10px; /* 增加表情项圆角 */
     transition: all 0.2s ease;
     font-size: 18px;
 }
@@ -612,18 +721,19 @@ body {
 /* ===== 错误提示 ===== */
 .error-toast {
     position: fixed;
-    top: 24px;
+    top: 48px; /* 考虑标题栏高度和圆角 */
     right: 24px;
     background: linear-gradient(135deg, #ff5252 0%, #ff7575 100%);
     color: white;
     padding: 16px 20px;
-    border-radius: 12px;
+    border-radius: 16px; /* 增加错误提示圆角 */
     display: none;
     align-items: center;
     gap: 12px;
     box-shadow: 0 10px 30px rgba(255, 82, 82, 0.3);
     z-index: 1001;
     max-width: 400px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .error-toast.show {
@@ -658,6 +768,7 @@ body {
     border: 1px solid rgba(255, 105, 135, 0.2);
     color: #6c757d;
     padding: 12px 16px;
+    border-radius: 20px; /* 确保输入指示器也有圆角 */
 }
 
 .typing-dots {
@@ -710,15 +821,20 @@ body {
 /* ===== 响应式设计 ===== */
 @media (max-width: 768px) {
     body {
-        padding: 0;
-        align-items: stretch;
+        border-radius: 12px; /* 移动端较小的圆角 */
+    }
+    
+    .custom-titlebar {
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .background-decoration {
+        border-radius: 12px; /* 移动端背景装饰也要对应调整 */
     }
     
     .chat-container {
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-        max-width: none;
+        margin: 4px;
+        border-radius: 0 0 8px 8px;
     }
     
     .chat-header {
@@ -739,18 +855,25 @@ body {
     
     .chat-input-container {
         padding: 16px 20px;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .input-wrapper {
+        border-radius: 16px;
     }
     
     .emoji-picker {
         right: 20px;
         bottom: 100px;
+        border-radius: 16px;
     }
     
     .error-toast {
-        top: 16px;
+        top: 40px;
         right: 16px;
         left: 16px;
         max-width: none;
+        border-radius: 12px;
     }
 }
 
@@ -763,11 +886,13 @@ body {
         width: 36px;
         height: 36px;
         font-size: 14px;
+        border-radius: 10px;
     }
     
     .message-bubble {
         padding: 12px 16px;
         font-size: 14px;
+        border-radius: 16px;
     }
     
     .input-group {
@@ -778,5 +903,6 @@ body {
         width: 36px;
         height: 36px;
         font-size: 14px;
+        border-radius: 12px;
     }
 }
