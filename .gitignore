@@ -45,7 +45,7 @@ configs/OAI_CONFIG_LIST.json
 # 操作系统
 .DS_Store
 Thumbs.db
-dev-note/devTarget.md
+dev-note/
 
 
 # 测试

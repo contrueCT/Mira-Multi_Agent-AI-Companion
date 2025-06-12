@@ -23,12 +23,18 @@
     "files": [
       "main.js",
       "preload.js",
-      "app/**/*",
+      "web/**/*",
       "assets/**/*"
     ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "icon": "assets/icon.png"
     }
   }
 }

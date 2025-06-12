@@ -44,6 +44,16 @@ function saveConfig() {
 function createWindow() {
     // 加载配置
     loadConfig()
+
+        // 构建图标路径
+    let iconPath;
+    if (process.platform === 'win32') {
+        iconPath = path.join(__dirname, 'assets/icon.ico');
+    } else if (process.platform === 'darwin') {
+        iconPath = path.join(__dirname, 'assets/icon.icns');
+    } else {
+        iconPath = path.join(__dirname, 'assets/icon.png');
+    }
     
     mainWindow = new BrowserWindow({
         width: config.windowBounds.width,
