@@ -11,6 +11,9 @@ class EmotionalChatApp {
         
         console.log(`🌐 运行环境: ${this.isElectron ? 'Electron桌面客户端' : '浏览器'}`)
         
+        // 初始化视觉效果处理器
+        this.visualEffects = new VisualEffectsProcessor()
+        
         this.init()
         this.bindEvents()
         this.setupAutoResize()
@@ -94,9 +97,7 @@ async updateMaximizeButton() {
         const icon = document.getElementById('maximizeIcon')
         icon.className = isMaximized ? 'fas fa-clone' : 'fas fa-square'
     }
-}
-
-    init() {
+}    init() {
         // DOM 元素引用
         this.chatMessages = document.getElementById('chatMessages')
         this.messageInput = document.getElementById('messageInput')
@@ -106,6 +107,7 @@ async updateMaximizeButton() {
         this.loadingOverlay = document.getElementById('loadingOverlay')
         this.errorToast = document.getElementById('errorToast')
         this.emotionalStatus = document.getElementById('emotionalStatus')
+        this.effectsToggleBtn = document.getElementById('effectsToggleBtn')
         
         // 应用状态
         this.isLoading = false
@@ -185,10 +187,17 @@ async updateMaximizeButton() {
                 this.showToast('设置功能正在开发中...', 'info')  // 浏览器端提示
             }
         })
-        
-        document.getElementById('historyBtn').addEventListener('click', () => {
+          document.getElementById('historyBtn').addEventListener('click', () => {
             this.showToast('聊天记录功能正在开发中...', 'info');
         });
+
+        // 视觉效果开关按钮
+        if (this.effectsToggleBtn) {
+            this.effectsToggleBtn.addEventListener('click', () => {
+                this.toggleVisualEffects();
+            });
+            this.updateEffectsToggleButton();
+        }
     }
 
     showSimpleSettingsPrompt() {
@@ -340,15 +349,24 @@ async updateMaximizeButton() {
             const data = await response.json();
             
             // 转换API响应格式为前端期望的格式
-            return {
+            const result = {
                 reply: data.response,
                 emotionalState: {
                     emotion: data.emotional_state?.current_emotion || 'neutral',
                     intensity: data.emotional_state?.emotion_intensity || 0.5,
                     relationshipLevel: data.emotional_state?.relationship_level || 1
                 },
-                processingTime: data.processing_time
+                processingTime: data.processing_time,
+                commands: data.commands || []  // 添加视觉效果指令
             };
+
+            // 处理视觉效果指令
+            if (result.commands && result.commands.length > 0) {
+                console.log(`🎨 收到 ${result.commands.length} 个视觉效果指令`)
+                this.processVisualCommands(result.commands)
+            }
+
+            return result;
 
         } catch (error) {
             console.error('API调用失败:', error);
@@ -599,10 +617,92 @@ async updateMaximizeButton() {
         setTimeout(() => {
             this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
         }, 10);
+    }    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    // ==================== 视觉效果相关方法 ====================
+
+    /**
+     * 处理视觉效果指令队列
+     */
+    async processVisualCommands(commands) {
+        if (!commands || commands.length === 0) return;
+
+        try {
+            // 按时间排序指令（如果有时间戳）
+            const sortedCommands = commands.sort((a, b) => {
+                if (a.timestamp && b.timestamp) {
+                    return new Date(a.timestamp) - new Date(b.timestamp);
+                }
+                return 0;
+            });
+
+            // 分离持久效果和临时效果
+            const persistentCommands = sortedCommands.filter(cmd => cmd.effect_type === 'persistent');
+            const temporaryCommands = sortedCommands.filter(cmd => cmd.effect_type === 'temporary');
+
+            // 先执行持久效果（只保留最后一个）
+            if (persistentCommands.length > 0) {
+                const lastPersistentCommand = persistentCommands[persistentCommands.length - 1];
+                await this.visualEffects.executeVisualCommand(lastPersistentCommand);
+            }
+
+            // 然后依次执行临时效果
+            for (const command of temporaryCommands) {
+                await this.visualEffects.executeVisualCommand(command);
+                // 临时效果之间稍微间隔
+                if (temporaryCommands.length > 1) {
+                    await this.sleep(200);
+                }
+            }
+
+        } catch (error) {
+            console.error('处理视觉效果指令时发生错误:', error);
+            this.showToast('视觉效果执行失败', 'error');
+        }
+    }
+
+    /**
+     * 切换视觉效果开关
+     */
+    toggleVisualEffects() {
+        const currentState = this.visualEffects.isEffectsEnabledStatus();
+        this.visualEffects.setEffectsEnabled(!currentState);
+        this.updateEffectsToggleButton();
+        
+        const status = this.visualEffects.isEffectsEnabledStatus() ? '已开启' : '已关闭';
+        this.showToast(`视觉效果${status}`, 'info');
+    }
+
+    /**
+     * 更新视觉效果开关按钮状态
+     */
+    updateEffectsToggleButton() {
+        if (!this.effectsToggleBtn) return;
+
+        const isEnabled = this.visualEffects.isEffectsEnabledStatus();
+        const icon = this.effectsToggleBtn.querySelector('i');
+        
+        if (isEnabled) {
+            icon.className = 'fas fa-magic';
+            this.effectsToggleBtn.style.color = '#ff6b6b';
+            this.effectsToggleBtn.title = '关闭视觉效果';
+        } else {
+            icon.className = 'fas fa-magic';
+            this.effectsToggleBtn.style.color = '#999';
+            this.effectsToggleBtn.title = '开启视觉效果';
+        }
+    }
+
+    /**
+     * 测试视觉效果（调试用）
+     */
+    testVisualEffect(effectName, intensity = 0.7) {
+        if (this.visualEffects) {
+            this.visualEffects.testEffect(effectName, intensity);
+            console.log(`🧪 测试视觉效果: ${effectName}, 强度: ${intensity}`);
+        }
     }
 }
 

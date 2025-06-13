@@ -1,0 +1,584 @@
+/* 
+ * 视觉效果样式文件
+ * 定义各种动画效果和主题样式
+ */
+
+/* ===== CSS变量定义 ===== */
+:root {
+    /* 默认主题变量 */
+    --theme-bg-start: #ff9a9e;
+    --theme-bg-middle: #fecfef;
+    --theme-bg-end: #fecfef;
+    --theme-accent: #ff6b6b;
+    --theme-text: #2c3e50;
+    --theme-brightness: 1;
+    --theme-saturation: 1;
+    
+    /* 动画变量 */
+    --effect-duration-fast: 0.3s;
+    --effect-duration-medium: 0.6s;
+    --effect-duration-slow: 1.2s;
+    --effect-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== 视觉效果容器 ===== */
+.visual-effects-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.temporary-effects-layer,
+.persistent-effects-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.temporary-effects-layer {
+    z-index: 15;
+}
+
+.persistent-effects-layer {
+    z-index: 5;
+}
+
+/* ===== 临时效果 - 庆祝烟花 ===== */
+.celebration-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.celebration-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    animation: firework var(--effect-duration-medium) var(--effect-timing) forwards;
+    box-shadow: 0 0 6px currentColor;
+}
+
+@keyframes firework {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(3) rotate(180deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(5) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.celebration-particle:nth-child(odd) {
+    animation: fireworkBurst var(--effect-duration-medium) var(--effect-timing) forwards;
+}
+
+@keyframes fireworkBurst {
+    0% {
+        transform: scale(0) translateY(0);
+        opacity: 1;
+    }
+    25% {
+        transform: scale(1.5) translateY(-20px);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(3) translateY(-40px);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0.5) translateY(-60px);
+        opacity: 0;
+    }
+}
+
+/* ===== 临时效果 - 飘落爱心 ===== */
+.hearts-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.floating-heart-particle {
+    position: absolute;
+    top: -50px;
+    font-size: 24px;
+    animation: heartFall 4s linear forwards;
+    filter: drop-shadow(0 2px 4px rgba(255, 105, 180, 0.3));
+}
+
+@keyframes heartFall {
+    0% {
+        transform: translateY(-50px) rotate(0deg) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0px) rotate(10deg) scale(1);
+    }
+    50% {
+        transform: translateY(50vh) rotate(-5deg) scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(100vh) rotate(15deg) scale(0.9);
+        opacity: 0;
+    }
+}
+
+.floating-heart-particle:nth-child(even) {
+    animation: heartSwing 4s ease-in-out forwards;
+}
+
+@keyframes heartSwing {
+    0% {
+        transform: translateY(-50px) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    25% {
+        transform: translateY(20vh) translateX(15px) rotate(5deg);
+    }
+    50% {
+        transform: translateY(50vh) translateX(-10px) rotate(-3deg);
+    }
+    75% {
+        transform: translateY(80vh) translateX(20px) rotate(8deg);
+    }
+    100% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+/* ===== 临时效果 - 闪烁星光 ===== */
+.sparkles-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.sparkle-particle {
+    position: absolute;
+    animation: sparkle 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px currentColor);
+}
+
+@keyframes sparkle {
+    0%, 100% {
+        transform: scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    25% {
+        transform: scale(1.2) rotate(90deg);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1) rotate(180deg);
+        opacity: 0.8;
+    }
+    75% {
+        transform: scale(1.3) rotate(270deg);
+        opacity: 1;
+    }
+}
+
+.sparkle-particle:nth-child(3n) {
+    animation: sparkleFloat 3s ease-in-out infinite;
+}
+
+@keyframes sparkleFloat {
+    0%, 100% {
+        transform: translateY(0) scale(0.8) rotate(0deg);
+        opacity: 0.6;
+    }
+    33% {
+        transform: translateY(-10px) scale(1.1) rotate(120deg);
+        opacity: 1;
+    }
+    66% {
+        transform: translateY(5px) scale(0.9) rotate(240deg);
+        opacity: 0.8;
+    }
+}
+
+/* ===== 临时效果 - 漂浮气泡 ===== */
+.bubbles-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.bubble-particle {
+    position: absolute;
+    bottom: -50px;
+    border-radius: 50%;
+    animation: bubbleFloat 6s ease-in-out forwards;
+    -webkit-backdrop-filter: blur(1px);
+    backdrop-filter: blur(1px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes bubbleFloat {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+        transform: translateY(-10vh) scale(1);
+    }
+    50% {
+        transform: translateY(-50vh) scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-120vh) scale(0.6);
+        opacity: 0;
+    }
+}
+
+.bubble-particle:nth-child(odd) {
+    animation: bubbleWobble 6s ease-in-out forwards;
+}
+
+@keyframes bubbleWobble {
+    0% {
+        transform: translateY(0) translateX(0) scale(0.8);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    25% {
+        transform: translateY(-25vh) translateX(20px) scale(1);
+    }
+    50% {
+        transform: translateY(-50vh) translateX(-15px) scale(1.1);
+    }
+    75% {
+        transform: translateY(-75vh) translateX(10px) scale(0.9);
+    }
+    100% {
+        transform: translateY(-120vh) translateX(0) scale(0.6);
+        opacity: 0;
+    }
+}
+
+/* ===== 临时效果 - 花瓣飘落 ===== */
+.flower-petals-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.petal-particle {
+    position: absolute;
+    top: -50px;
+    font-size: 20px;
+    animation: petalFall 5s ease-in-out forwards;
+    filter: drop-shadow(0 2px 4px rgba(255, 182, 193, 0.4));
+}
+
+@keyframes petalFall {
+    0% {
+        transform: translateY(-50px) rotate(0deg) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    25% {
+        transform: translateY(20vh) rotate(90deg) scale(1.1);
+    }
+    50% {
+        transform: translateY(50vh) rotate(180deg) scale(0.9);
+    }
+    75% {
+        transform: translateY(80vh) rotate(270deg) scale(1.05);
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg) scale(0.8);
+        opacity: 0;
+    }
+}
+
+.petal-particle:nth-child(even) {
+    animation: petalSpiral 5s ease-in-out forwards;
+}
+
+@keyframes petalSpiral {
+    0% {
+        transform: translateY(-50px) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    25% {
+        transform: translateY(20vh) translateX(30px) rotate(45deg);
+    }
+    50% {
+        transform: translateY(50vh) translateX(-20px) rotate(180deg);
+    }
+    75% {
+        transform: translateY(80vh) translateX(15px) rotate(315deg);
+    }
+    100% {
+        transform: translateY(100vh) translateX(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ===== 主题效果 ===== */
+
+/* 温暖主题 */
+.app-container.warm-theme {
+    background: linear-gradient(135deg, 
+        var(--theme-bg-start) 0%, 
+        var(--theme-bg-middle) 50%, 
+        var(--theme-bg-end) 100%) !important;
+    filter: brightness(var(--theme-brightness)) saturate(var(--theme-saturation));
+}
+
+.app-container.warm-theme .chat-container {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: var(--theme-text);
+}
+
+.app-container.warm-theme .custom-titlebar {
+    background: linear-gradient(135deg, var(--theme-accent) 0%, #ff8e8e 100%) !important;
+}
+
+.app-container.warm-theme .bot-message .message-bubble {
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 154, 158, 0.15) 100%) !important;
+    border-left: 3px solid var(--theme-accent) !important;
+}
+
+/* 清凉主题 */
+.app-container.cool-theme {
+    background: linear-gradient(135deg, 
+        var(--theme-bg-start) 0%, 
+        var(--theme-bg-middle) 50%, 
+        var(--theme-bg-end) 100%) !important;
+    filter: brightness(var(--theme-brightness)) saturate(var(--theme-saturation));
+}
+
+.app-container.cool-theme .chat-container {
+    background: rgba(255, 255, 255, 0.93) !important;
+    color: var(--theme-text);
+}
+
+.app-container.cool-theme .custom-titlebar {
+    background: linear-gradient(135deg, var(--theme-accent) 0%, #6ec6d9 100%) !important;
+}
+
+.app-container.cool-theme .bot-message .message-bubble {
+    background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(168, 230, 207, 0.15) 100%) !important;
+    border-left: 3px solid var(--theme-accent) !important;
+}
+
+/* 夕阳主题 */
+.app-container.sunset-theme {
+    background: linear-gradient(135deg, 
+        var(--theme-bg-start) 0%, 
+        var(--theme-bg-middle) 50%, 
+        var(--theme-bg-end) 100%) !important;
+    filter: brightness(var(--theme-brightness)) saturate(var(--theme-saturation));
+}
+
+.app-container.sunset-theme .chat-container {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: var(--theme-text);
+}
+
+.app-container.sunset-theme .custom-titlebar {
+    background: linear-gradient(135deg, var(--theme-accent) 0%, #ff7043 100%) !important;
+}
+
+.app-container.sunset-theme .bot-message .message-bubble {
+    background: linear-gradient(135deg, rgba(255, 87, 34, 0.1) 0%, rgba(255, 126, 95, 0.15) 100%) !important;
+    border-left: 3px solid var(--theme-accent) !important;
+}
+
+/* 夜晚主题 */
+.app-container.night-theme {
+    background: linear-gradient(135deg, 
+        var(--theme-bg-start) 0%, 
+        var(--theme-bg-middle) 50%, 
+        var(--theme-bg-end) 100%) !important;
+    filter: brightness(var(--theme-brightness)) saturate(var(--theme-saturation));
+}
+
+.app-container.night-theme .chat-container {
+    background: rgba(52, 73, 94, 0.95) !important;
+    color: var(--theme-text);
+}
+
+.app-container.night-theme .custom-titlebar {
+    background: linear-gradient(135deg, var(--theme-accent) 0%, #34495e 100%) !important;
+}
+
+.app-container.night-theme .bot-message .message-bubble {
+    background: rgba(52, 152, 219, 0.15) !important;
+    border-left: 3px solid var(--theme-accent) !important;
+    color: #ecf0f1;
+}
+
+.app-container.night-theme .user-message .message-bubble {
+    background: rgba(149, 165, 166, 0.2) !important;
+    color: #ecf0f1;
+}
+
+.app-container.night-theme .message-time {
+    color: rgba(236, 240, 241, 0.7) !important;
+}
+
+/* 春日主题 */
+.app-container.spring-theme {
+    background: linear-gradient(135deg, 
+        var(--theme-bg-start) 0%, 
+        var(--theme-bg-middle) 50%, 
+        var(--theme-bg-end) 100%) !important;
+    filter: brightness(var(--theme-brightness)) saturate(var(--theme-saturation));
+}
+
+.app-container.spring-theme .chat-container {
+    background: rgba(255, 255, 255, 0.94) !important;
+    color: var(--theme-text);
+}
+
+.app-container.spring-theme .custom-titlebar {
+    background: linear-gradient(135deg, var(--theme-accent) 0%, #66bb6a 100%) !important;
+}
+
+.app-container.spring-theme .bot-message .message-bubble {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(168, 230, 207, 0.15) 100%) !important;
+    border-left: 3px solid var(--theme-accent) !important;
+}
+
+/* ===== 强度级别样式 ===== */
+.effect-intensity-low {
+    opacity: 0.6;
+    transform: scale(0.8);
+}
+
+.effect-intensity-medium {
+    opacity: 0.8;
+    transform: scale(1);
+}
+
+.effect-intensity-high {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* ===== 过渡动画 ===== */
+.visual-effect-enter {
+    animation: effectEnter 0.6s var(--effect-timing) forwards;
+}
+
+.visual-effect-exit {
+    animation: effectExit 0.4s var(--effect-timing) forwards;
+}
+
+@keyframes effectEnter {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes effectExit {
+    0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+}
+
+/* ===== 性能优化 ===== */
+.visual-effects-container,
+.visual-effects-container * {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* ===== 响应式适配 ===== */
+@media (max-width: 768px) {
+    .celebration-particle,
+    .floating-heart-particle,
+    .sparkle-particle,
+    .petal-particle {
+        font-size: 0.8em;
+    }
+    
+    .bubble-particle {
+        max-width: 30px;
+        max-height: 30px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .visual-effects-container * {
+        animation-duration: 0.1s !important;
+        animation-iteration-count: 1 !important;
+    }
+    
+    .app-container {
+        transition: none !important;
+    }
+}
+
+/* ===== 调试样式 (仅开发环境) ===== */
+.debug-mode .visual-effects-container {
+    border: 2px dashed rgba(255, 0, 0, 0.3);
+}
+
+.debug-mode .temporary-effects-layer {
+    background: rgba(0, 255, 0, 0.05);
+}
+
+.debug-mode .persistent-effects-layer {
+    background: rgba(0, 0, 255, 0.05);
+}
