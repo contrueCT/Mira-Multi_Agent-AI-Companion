@@ -16,6 +16,7 @@ from contextlib import asynccontextmanager
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
+from autogen_core import try_get_known_serializers_for_type
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -145,7 +146,7 @@ async def chat_endpoint(request: ChatRequest):
         # 获取AI回复
         ai_response = await server.conversation_handler.get_response(
             request.message, 
-            enable_timing=request.enable_timing
+            enable_timing=True
         )
         
         processing_time = time.time() - start_time
