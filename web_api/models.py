@@ -10,7 +10,7 @@ from datetime import datetime
 class ChatRequest(BaseModel):
     """聊天请求模型"""
     message: str
-    enable_timing: bool = False
+    enable_timing: bool = True
 
 
 class ChatResponse(BaseModel):

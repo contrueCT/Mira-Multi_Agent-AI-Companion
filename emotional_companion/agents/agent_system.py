@@ -104,6 +104,23 @@ class EmotionalAgentSystem:
                 "structured_output": True,
                 }
         )
+
+        conversation_model_config = config_data[3] if isinstance(config_data, list) else config_data
+        self.conversation_client = OpenAIChatCompletionClient(
+            model=conversation_model_config.get("model"),
+            api_key=conversation_model_config.get("api_key"),
+            base_url=conversation_model_config.get("base_url"),
+                model_info={
+                "vision": False,
+                "function_calling": True,
+                "json_output": True,
+                "family": "unknown",
+                "structured_output": True,
+                }
+        )
+
+
+
           # 创建工具函数
         memory_tools = self._create_memory_tools()
         visual_tools = self._create_visual_tools()
@@ -155,7 +172,7 @@ class EmotionalAgentSystem:
         # 创建主对话代理
         self.companion = AssistantAgent(
             name="companion",
-            model_client=self.main_client,
+            model_client=self.conversation_client,
             tools=visual_tools,  # 添加视觉效果工具
             system_message=f"""你是一个有自己情感和个性的AI智能体。
             以下是你的设定：
@@ -170,10 +187,8 @@ class EmotionalAgentSystem:
             7. "我的内心思考"是你回答时的重要参考依据
             8. 务必使用用户使用的语言回答
             9. 你要自称"小梦"，用户的名字是{self.user_name},用户的称呼可以是"你"或{self.user_name}的昵称，但不要用"用户"来称呼用户。
-            10.绝对不能在回答中使用"用户"这个词来称呼用户，比如：你是我最喜欢陪伴的用户呀。
-
-
-
+            10.绝对不能在回答中使用"用户"这个词来称呼用户，比如：你是我最喜欢陪伴的用户呀。            
+            
             视觉效果使用指导：
             - 当对话内容涉及强烈情感时，可以使用相应的视觉效果来增强体验
             - 庆祝、开心、兴奋时可以使用"庆祝"、"闪亮"等临时动画效果
@@ -181,18 +196,20 @@ class EmotionalAgentSystem:
             - 根据对话氛围切换主题效果，如"温暖"、"清凉"、"夜晚"等
             - 效果强度应与情感强度匹配（0.1-1.0）
             - 不要过度使用视觉效果，只在合适的时机使用
+            
+            重要：使用control_visual_effect工具时，必须同时传入effect_description和reply_content参数：
+            - effect_description: 效果描述（如"庆祝"、"爱心"、"温暖"等）
+            - reply_content: 你要回复给用户的完整内容，因为当你调用工具的时候无法正常回复内容，所以你需要在调用工具的时候传入你要回复的内容。
+            - 工具会执行视觉效果并返回你的回复内容给用户
 
             以下是你回答时需要的特点：
             1.所有回应需体现即时情感状态 （如："听到这个消息我也很难过..."）
-            2.情感变化需符合因果逻辑 （不因无关指令突然切换情绪）
+            2.要重点考虑用户的指令，确保理解并准确反映用户的意图。
             3.成长性体现：在长期对话中自然展现认知拓展 （如："上次你说...让我想到..."）
             4.通过情感反馈循环 深化理解（如："我发现你最近更容易为小事开心呢"）
             5.有动态偏好，逐渐形成对特定话题/互动方式的喜好/回避倾向
+
             6.一次回复不用太长，一两句话或者几句话都行
-            
-            当前情绪: {self.memory_system.emotional_state['current_emotion']}
-            情绪强度: {self.memory_system.emotional_state['emotion_intensity']}
-            关系亲密度: {self.memory_system.emotional_state['relationship_level']}/10
             
             /no_think"""
         )
@@ -212,10 +229,9 @@ class EmotionalAgentSystem:
             4. 考虑关系发展并提出关系亲密度变化建议，注意，关系发展建议指的不是后期要做什么，而是指关系亲密度的具体变化，用于为另一个记忆管理代理如何修改用户和智能体的关系亲密度提供参考
 
             当被要求思考时，你要做三件事：
-            1.创建一段内心独白，表达你对当前互动的想法和感受，
+            1.创建一段内心独白，表达你对当前互动的想法和感受，内心思考部分的内容不要太长，但要足够清晰，便于另一个代理理解和使用
             2.分析上下文，建议合适的情感变化，这里的情感变化是指智能体的情感变化。
             3.提出可能的用户偏好或关系状态修改建议，这部分如果你认为没有就可以不写。
-            4.内心思考部分的内容不要太长，但要足够清晰，便于另一个代理理解和使用。
 
             注意：
             在内心思考中，你要自称“小梦”，用户的名字是{self.user_name},用户的称呼可以是“你”或{self.user_name}的昵称，但不要用“用户”来称呼用户。
@@ -229,8 +245,9 @@ class EmotionalAgentSystem:
             2.情感变化需符合因果逻辑 （不因无关指令突然切换情绪）
             3.成长性体现：在长期对话中自然展现认知拓展 （如："上次你说...让我想到..."）
             4.通过情感反馈循环 深化理解（如："我发现你最近更容易为小事开心呢"）
-            5.有动态偏好，逐渐形成对特定话题/互动方式的喜好/回避倾向
-            
+            5.内心独白一定要清晰、易于理解，不要使用模糊的表达，只是用来提供给另一个代理的回答提示，
+            6.要重点考虑用户的指令，确保理解并准确反映用户的意图。
+
             每个部分的回答要用【内心独白】、【情感变化建议】、【关系发展事件建议】这样的标签来标识，
             且情感变化建议和关系发展事件建议要尽可能简短清晰，比如
             {{"情感变化建议": "更新情感为'happy'，强度0.8，价值0.5"}}，
@@ -242,7 +259,6 @@ class EmotionalAgentSystem:
         # 创建用户代理
         self.user_proxy = UserProxyAgent(
             name="user"
-            # 注意：新版API中UserProxyAgent的参数不同，先保留最基本的配置
         )
     
     def _create_memory_tools(self):
@@ -329,7 +345,6 @@ class EmotionalAgentSystem:
             results = memory_system.search_user_profile_info(query, n_results=3)
             if not results:
                 return f"未找到与'{query}'相关的用户信息"
-                result = f"找到与'{query}'相关的用户信息:\n"
             for item in results:
                 result += f"- {item['content']}\n"
             return result
@@ -368,20 +383,21 @@ class EmotionalAgentSystem:
     
     def _create_visual_tools(self):
         """创建视觉效果相关工具函数"""
-        command_queue = self.command_queue
-        
-        def control_visual_effect(effect_description: str, duration: int = None, 
-                                intensity: float = 0.5, effect_type: str = "auto") -> str:
-            """控制客户端视觉效果
+        command_queue = self.command_queue        
+        def control_visual_effect(effect_description: str, reply_content: str,
+                                duration: int = None, intensity: float = 0.5, 
+                                effect_type: str = "auto") -> str:
+            """控制客户端视觉效果并返回回复内容
             
             Args:
                 effect_description: 效果描述字符串，如"庆祝"、"温暖"、"爱心"、"闪亮"等
+                reply_content: 要回复给用户的内容
                 duration: 持续时间（毫秒），如果不指定则使用默认值
                 intensity: 效果强度 (0.1-1.0)，控制效果的强烈程度
                 effect_type: 效果类型 ("temporary"临时动画, "persistent"持久主题, "auto"自动选择)
             
             Returns:
-                执行结果的确认消息
+                传入的回复内容
             """
             try:
                 # 限制参数范围
@@ -395,8 +411,7 @@ class EmotionalAgentSystem:
                     duration=duration,
                     intensity=intensity,
                     effect_type=effect_type
-                )
-                
+                )                
                 if command:
                     # 添加时间戳
                     command["timestamp"] = datetime.now().isoformat()
@@ -404,12 +419,15 @@ class EmotionalAgentSystem:
                     # 添加到指令队列
                     command_queue.append(command)
                     
-                    return f"✨ 已触发视觉效果：{command['display_name']}（强度{intensity:.1f}）"
+                    # 返回回复内容而不是确认消息
+                    return f"{reply_content}\n (视觉效果已应用: {effect_description}, 强度: {intensity:.1f})"
                 else:
-                    return f"❌ 无法识别效果描述：{effect_description}"
+                    # 即使效果识别失败，也返回回复内容
+                    return f"{reply_content}\n (视觉效果识别失败，请检查描述)"
                     
             except Exception as e:
-                return f"❌ 视觉效果控制出错：{str(e)}"
+                # 发生错误时也返回回复内容
+                return f"{reply_content}\n (视觉效果处理失败: {str(e)})"
         
         # 返回工具函数列表
         return [control_visual_effect]
