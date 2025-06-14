@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小梦情感陪伴</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>小梦情感陪伴</title>    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/visual-effects.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -53,8 +53,10 @@
                 <div class="header-info">
                     <h1 class="chat-title">小梦</h1>
                     <p class="chat-subtitle" id="emotionalStatus">心情愉悦 | 亲密度 8/10</p>
-                </div>
-                <div class="header-actions">
+                </div>                <div class="header-actions">
+                    <button class="header-btn" id="effectsToggleBtn" title="视觉效果开关">
+                        <i class="fas fa-magic"></i>
+                    </button>
                     <button class="header-btn" id="settingsBtn" title="设置">
                         <i class="fas fa-cog"></i>
                     </button>
@@ -148,8 +150,7 @@
     <div class="error-toast" id="errorToast">
         <i class="fas fa-exclamation-triangle"></i>
         <span class="error-message">发生了一些小问题，请稍后再试～</span>
-    </div>
-
+    </div>    <script src="js/visual-effects.js"></script>
     <script src="js/chat.js"></script>
 </body>
 </html>

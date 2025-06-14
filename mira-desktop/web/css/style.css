@@ -323,6 +323,44 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 悬停时添加阴影 */
 }
 
+/* 视觉效果开关按钮特殊样式 */
+#effectsToggleBtn {
+    position: relative;
+    color: #ff6b6b;
+    transition: all 0.3s ease;
+}
+
+#effectsToggleBtn:hover {
+    background: rgba(255, 107, 107, 0.1) !important;
+    color: #ff4757 !important;
+}
+
+#effectsToggleBtn.disabled {
+    color: #999 !important;
+}
+
+#effectsToggleBtn.disabled:hover {
+    background: rgba(153, 153, 153, 0.1) !important;
+}
+
+/* 效果开关状态指示器 */
+#effectsToggleBtn::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4caf50;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+#effectsToggleBtn.disabled::after {
+    opacity: 0;
+}
+
 /* ===== 聊天消息区域 ===== */
 .chat-messages {
     flex: 1;

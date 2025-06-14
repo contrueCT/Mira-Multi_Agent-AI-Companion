@@ -63,6 +63,61 @@ class ConversationHandler:
             print(f"[错误] {error_msg}")            
             return error_msg
     
+    async def get_response_with_commands(self, user_message: str, enable_timing=False) -> dict:
+        """
+        获取智能体对用户消息的完整回复（包含视觉效果指令）
+        
+        Args:
+            user_message: 用户输入的消息
+            enable_timing: 是否启用时间统计
+            
+        Returns:
+            dict: 包含回复文本和视觉效果指令的字典
+        """
+        try:
+            # 开始计时（可选）
+            if enable_timing:
+                total_start = time.perf_counter()
+                print(f"\n[处理中] 正在分析用户消息: {user_message[:50]}...")
+            
+            # 记录日志
+            self.agent_system.logger.new_chat(user_message)
+            
+            # 创建cancellation token
+            cancellation_token = CancellationToken()
+            
+            # 执行完整的对话流程
+            response = await self._process_conversation_flow(
+                user_message, 
+                cancellation_token, 
+                enable_timing
+            )
+            
+            # 获取视觉效果指令
+            commands = self.agent_system.get_pending_commands()
+            
+            # 显示总时间（可选）
+            if enable_timing:
+                total_time = time.perf_counter() - total_start
+                print(f"[完成] 总处理时间: {total_time:.2f}秒")
+                if commands:
+                    print(f"[视觉效果] 生成了 {len(commands)} 个效果指令")
+            
+            return {
+                "response": response,
+                "commands": commands,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            error_msg = f"抱歉，我遇到了一些问题：{str(e)}"
+            print(f"[错误] {error_msg}")            
+            return {
+                "response": error_msg,
+                "commands": [],
+                "timestamp": datetime.now().isoformat()
+            }
+    
     async def _process_conversation_flow(self, user_input: str, cancellation_token, enable_timing=False):
         """处理完整的对话流程"""
         

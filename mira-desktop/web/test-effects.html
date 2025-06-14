@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视觉效果测试 - 小梦情感陪伴</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/visual-effects.css">
+    <style>
+        .test-panel {
+            position: fixed;
+            top: 50px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            min-width: 300px;
+        }
+        
+        .test-panel h3 {
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+        
+        .effect-group {
+            margin-bottom: 15px;
+        }
+        
+        .effect-group h4 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+        
+        .effect-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .test-btn {
+            padding: 6px 12px;
+            border: 1px solid #ff6b6b;
+            background: white;
+            color: #ff6b6b;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .test-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .intensity-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .close-test-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- 应用主容器 -->
+    <div class="app-container">
+        <!-- 自定义标题栏 -->
+        <div class="custom-titlebar">
+            <div class="titlebar-content">
+                <div class="titlebar-title">视觉效果测试 - 小梦情感陪伴</div>
+            </div>
+            <div class="titlebar-controls">
+                <button class="titlebar-btn minimize-btn" title="最小化">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="titlebar-btn maximize-btn" title="最大化">
+                    <i class="fas fa-square"></i>
+                </button>
+                <button class="titlebar-btn close-btn" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 主容器 -->
+        <div class="chat-container">
+            <!-- 顶部标题栏 -->
+            <div class="chat-header">
+                <div class="avatar-container">
+                    <div class="avatar">
+                        <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
+                    </div>
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="header-info">
+                    <h1 class="chat-title">小梦 - 视觉效果测试</h1>
+                    <p class="chat-subtitle">测试各种视觉效果</p>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" id="effectsToggleBtn" title="视觉效果开关">
+                        <i class="fas fa-magic"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 聊天区域 -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot-message welcome-message">
+                    <div class="message-avatar">
+                        <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <p>欢迎来到视觉效果测试页面！💖</p>
+                            <p>点击左侧的按钮来测试各种视觉效果～</p>
+                        </div>
+                        <div class="message-time">刚刚</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试控制面板 -->
+    <div class="test-panel" id="testPanel">
+        <button class="close-test-panel" onclick="document.getElementById('testPanel').style.display='none'">×</button>
+        <h3>🎨 视觉效果测试</h3>
+        
+        <div class="effect-group">
+            <h4>临时效果</h4>
+            <div class="effect-buttons">
+                <button class="test-btn" onclick="testEffect('celebration')">庆祝烟花</button>
+                <button class="test-btn" onclick="testEffect('hearts')">飘落爱心</button>
+                <button class="test-btn" onclick="testEffect('sparkles')">闪烁星光</button>
+                <button class="test-btn" onclick="testEffect('bubbles')">漂浮气泡</button>
+                <button class="test-btn" onclick="testEffect('flower_petals')">花瓣飘落</button>
+            </div>
+        </div>
+        
+        <div class="effect-group">
+            <h4>主题效果</h4>
+            <div class="effect-buttons">
+                <button class="test-btn" onclick="testEffect('warm_theme')">温暖主题</button>
+                <button class="test-btn" onclick="testEffect('cool_theme')">清凉主题</button>
+                <button class="test-btn" onclick="testEffect('sunset_theme')">夕阳主题</button>
+                <button class="test-btn" onclick="testEffect('night_theme')">夜晚主题</button>
+                <button class="test-btn" onclick="testEffect('spring_theme')">春日主题</button>
+            </div>
+        </div>
+        
+        <div class="effect-group">
+            <h4>强度调节</h4>
+            <label for="intensitySlider">效果强度：</label>
+            <input type="range" class="intensity-slider" id="intensitySlider" min="0.1" max="1.0" step="0.1" value="0.7" title="调节效果强度">
+            <span id="intensityValue">0.7</span>
+        </div>
+        
+        <div class="effect-group">
+            <div class="effect-buttons">
+                <button class="test-btn" onclick="resetEffects()">重置效果</button>
+                <button class="test-btn" onclick="toggleEffects()">开关效果</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/visual-effects.js"></script>
+    <script>
+        // 初始化视觉效果处理器
+        let visualEffects;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            visualEffects = new VisualEffectsProcessor()
+            
+            // 初始化强度滑块
+            const slider = document.getElementById('intensitySlider')
+            const valueDisplay = document.getElementById('intensityValue')
+            
+            slider.addEventListener('input', (e) => {
+                valueDisplay.textContent = e.target.value
+            })
+            
+            // 初始化效果开关按钮
+            const toggleBtn = document.getElementById('effectsToggleBtn')
+            toggleBtn.addEventListener('click', toggleEffects)
+            updateToggleButton()
+            
+            console.log('🎨 视觉效果测试页面初始化完成')
+        })
+        
+        function testEffect(effectName) {
+            if (!visualEffects) {
+                console.error('视觉效果处理器未初始化')
+                return
+            }
+            
+            const intensity = parseFloat(document.getElementById('intensitySlider').value)
+            
+            // 创建测试指令
+            const testCommand = {
+                effect_name: effectName,
+                effect_type: effectName.includes('theme') ? 'persistent' : 'temporary',
+                display_name: getEffectDisplayName(effectName),
+                duration: 3000,
+                intensity: intensity,
+                parameters: getEffectParameters(effectName),
+                timestamp: new Date().toISOString()
+            }
+            
+            console.log(`🧪 测试效果: ${testCommand.display_name}, 强度: ${intensity}`)
+            visualEffects.executeVisualCommand(testCommand)
+        }
+        
+        function getEffectDisplayName(effectName) {
+            const displayNames = {
+                'celebration': '庆祝烟花',
+                'hearts': '飘落爱心',
+                'sparkles': '闪烁星光',
+                'bubbles': '漂浮气泡',
+                'flower_petals': '花瓣飘落',
+                'warm_theme': '温暖主题',
+                'cool_theme': '清凉主题',
+                'sunset_theme': '夕阳主题',
+                'night_theme': '夜晚主题',
+                'spring_theme': '春日主题'
+            }
+            return displayNames[effectName] || effectName
+        }
+        
+        function getEffectParameters(effectName) {
+            // 简化的参数配置
+            const parameters = {
+                'celebration': {
+                    particle_count: 50,
+                    colors: ["#ff6b6b", "#4ecdc4", "#45b7d1", "#f9ca24"],
+                    animation_speed: 1.0
+                },
+                'hearts': {
+                    heart_count: 15,
+                    colors: ["#ff69b4", "#ff1493", "#dc143c"]
+                },
+                'sparkles': {
+                    sparkle_count: 25,
+                    colors: ["#ffd700", "#ffff00", "#ffffff", "#87ceeb"]
+                },
+                'bubbles': {
+                    bubble_count: 20,
+                    colors: ["rgba(135,206,235,0.6)", "rgba(173,216,230,0.6)"]
+                },
+                'flower_petals': {
+                    petal_count: 18,
+                    colors: ["#ff69b4", "#ffc0cb", "#ffb6c1"]
+                },
+                'warm_theme': {
+                    background_gradient: {
+                        start: "#ff9a9e",
+                        middle: "#fecfef", 
+                        end: "#fecfef"
+                    },
+                    accent_color: "#ff6b6b",
+                    text_color: "#2c3e50",
+                    brightness: 1.0,
+                    saturation: 1.0
+                },
+                'cool_theme': {
+                    background_gradient: {
+                        start: "#a8e6cf",
+                        middle: "#dcedc1",
+                        end: "#ffd3a5"
+                    },
+                    accent_color: "#4ecdc4",
+                    text_color: "#2c3e50",
+                    brightness: 1.0,
+                    saturation: 0.9
+                },
+                'sunset_theme': {
+                    background_gradient: {
+                        start: "#ff7e5f",
+                        middle: "#feb47b",
+                        end: "#ff6b6b"
+                    },
+                    accent_color: "#ff5722",
+                    text_color: "#ffffff",
+                    brightness: 0.9,
+                    saturation: 1.1
+                },
+                'night_theme': {
+                    background_gradient: {
+                        start: "#2c3e50",
+                        middle: "#34495e",
+                        end: "#2c3e50"
+                    },
+                    accent_color: "#3498db",
+                    text_color: "#ecf0f1",
+                    brightness: 0.8,
+                    saturation: 0.7
+                },
+                'spring_theme': {
+                    background_gradient: {
+                        start: "#a8e6cf",
+                        middle: "#dcedc8",
+                        end: "#c8e6c9"
+                    },
+                    accent_color: "#4caf50",
+                    text_color: "#2e7d32",
+                    brightness: 1.1,
+                    saturation: 1.0
+                }
+            }
+            return parameters[effectName] || {}
+        }
+        
+        function resetEffects() {
+            if (visualEffects) {
+                visualEffects.cleanupPersistentEffect()
+                console.log('🔄 已重置所有效果')
+            }
+        }
+        
+        function toggleEffects() {
+            if (visualEffects) {
+                const currentState = visualEffects.isEffectsEnabledStatus()
+                visualEffects.setEffectsEnabled(!currentState)
+                updateToggleButton()
+                
+                const status = visualEffects.isEffectsEnabledStatus() ? '已开启' : '已关闭'
+                console.log(`🎛️ 视觉效果${status}`)
+            }
+        }
+        
+        function updateToggleButton() {
+            const btn = document.getElementById('effectsToggleBtn')
+            if (!btn || !visualEffects) return
+            
+            const isEnabled = visualEffects.isEffectsEnabledStatus()
+            if (isEnabled) {
+                btn.classList.remove('disabled')
+                btn.style.color = '#ff6b6b'
+            } else {
+                btn.classList.add('disabled')
+                btn.style.color = '#999'
+            }
+        }
+    </script>
+</body>
+</html>

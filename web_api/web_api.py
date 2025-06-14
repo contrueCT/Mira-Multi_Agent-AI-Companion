@@ -143,13 +143,21 @@ async def chat_endpoint(request: ChatRequest):
     try:
         start_time = time.time()
         
-        # 获取AI回复
-        ai_response = await server.conversation_handler.get_response(
+        # 获取AI回复（包含视觉效果指令）
+        response_data = await server.conversation_handler.get_response_with_commands(
             request.message, 
-            enable_timing=True
+            enable_timing=request.enable_timing
         )
         
         processing_time = time.time() - start_time
+        
+        # 从响应数据中提取回复文本和指令
+        ai_response = response_data.get("response", "")
+        commands = response_data.get("commands", [])
+        
+        # 为指令添加时间戳
+        for command in commands:
+            command["timestamp"] = datetime.now().isoformat()
         
         # 获取当前情感状态
         emotional_state = server.conversation_handler.get_current_emotional_state()
@@ -177,7 +185,8 @@ async def chat_endpoint(request: ChatRequest):
             response=ai_response,
             timestamp=timestamp,
             emotional_state=emotional_state,
-            processing_time=processing_time if request.enable_timing else None
+            processing_time=processing_time if request.enable_timing else None,
+            commands=commands if commands else None
         )
         
     except Exception as e:
