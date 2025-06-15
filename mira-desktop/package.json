@@ -1,6 +1,7 @@
 {
   "name": "mira-desktop",
   "version": "1.0.0",
+  "author": "contrueCT",
   "description": "小梦桌面客户端",
   "main": "main.js",
   "scripts": {
@@ -9,9 +10,10 @@
     "dev": "electron . --dev"
   },
   "dependencies": {
-    "electron": "^27.0.0"
+
   },
   "devDependencies": {
+    "electron": "^27.0.0",
     "electron-builder": "^24.6.4"
   },
   "build": {

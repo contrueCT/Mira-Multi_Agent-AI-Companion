@@ -376,6 +376,28 @@
 .app-container.warm-theme .chat-container {
     background: rgba(255, 255, 255, 0.92) !important;
     color: var(--theme-text);
+    position: relative;
+}
+
+.app-container.warm-theme .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 154, 158, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(254, 207, 239, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 107, 107, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+.app-container.warm-theme .chat-messages {
+    position: relative;
+    z-index: 1;
 }
 
 .app-container.warm-theme .custom-titlebar {
@@ -399,6 +421,28 @@
 .app-container.cool-theme .chat-container {
     background: rgba(255, 255, 255, 0.93) !important;
     color: var(--theme-text);
+    position: relative;
+}
+
+.app-container.cool-theme .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 70%, rgba(168, 230, 207, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 70% 30%, rgba(78, 205, 196, 0.08) 0%, transparent 50%),
+        linear-gradient(45deg, transparent 49%, rgba(220, 237, 193, 0.05) 50%, transparent 51%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+.app-container.cool-theme .chat-messages {
+    position: relative;
+    z-index: 1;
 }
 
 .app-container.cool-theme .custom-titlebar {
@@ -422,6 +466,28 @@
 .app-container.sunset-theme .chat-container {
     background: rgba(255, 255, 255, 0.9) !important;
     color: var(--theme-text);
+    position: relative;
+}
+
+.app-container.sunset-theme .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(ellipse at top, rgba(255, 126, 95, 0.15) 0%, transparent 70%),
+        radial-gradient(circle at 80% 80%, rgba(255, 87, 34, 0.1) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(254, 180, 123, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+.app-container.sunset-theme .chat-messages {
+    position: relative;
+    z-index: 1;
 }
 
 .app-container.sunset-theme .custom-titlebar {
@@ -445,6 +511,63 @@
 .app-container.night-theme .chat-container {
     background: rgba(52, 73, 94, 0.95) !important;
     color: var(--theme-text);
+    position: relative;
+}
+
+.app-container.night-theme .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(2px 2px at 160px 30px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 200px 60px, rgba(255, 255, 255, 0.8), transparent),
+        radial-gradient(1px 1px at 240px 90px, rgba(255, 255, 255, 0.5), transparent),
+        radial-gradient(2px 2px at 280px 20px, rgba(255, 255, 255, 0.7), transparent),
+        radial-gradient(1px 1px at 320px 70px, rgba(255, 255, 255, 0.6), transparent),
+        radial-gradient(1px 1px at 360px 45px, rgba(255, 255, 255, 0.8), transparent);
+    background-repeat: repeat;
+    background-size: 400px 200px;
+    animation: starsMove 60s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+.app-container.night-theme .chat-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(1px 1px at 50px 100px, rgba(135, 206, 235, 0.9), transparent),
+        radial-gradient(1px 1px at 150px 150px, rgba(255, 255, 255, 0.9), transparent),
+        radial-gradient(2px 2px at 250px 50px, rgba(176, 196, 222, 0.8), transparent),
+        radial-gradient(1px 1px at 350px 120px, rgba(255, 255, 255, 0.7), transparent);
+    background-repeat: repeat;
+    background-size: 500px 300px;
+    animation: starsMove 90s linear infinite reverse;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+@keyframes starsMove {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-400px); }
+}
+
+.app-container.night-theme .chat-messages {
+    position: relative;
+    z-index: 1;
 }
 
 .app-container.night-theme .custom-titlebar {
@@ -478,6 +601,56 @@
 .app-container.spring-theme .chat-container {
     background: rgba(255, 255, 255, 0.94) !important;
     color: var(--theme-text);
+    position: relative;
+}
+
+.app-container.spring-theme .chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 15% 25%, rgba(168, 230, 207, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(200, 230, 201, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 50% 10%, rgba(76, 175, 80, 0.08) 0%, transparent 40%),
+        linear-gradient(45deg, transparent 48%, rgba(168, 230, 207, 0.03) 49%, rgba(200, 230, 201, 0.03) 51%, transparent 52%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 16px 16px;
+}
+
+.app-container.spring-theme .chat-container::after {
+    content: '🌸🌺🌿🍃🦋';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 12px;
+    opacity: 0.3;
+    animation: springFloat 8s ease-in-out infinite, springRotate 15s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes springFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    25% { transform: translateY(-5px) rotate(2deg); opacity: 0.5; }
+    50% { transform: translateY(-8px) rotate(-1deg); opacity: 0.4; }
+    75% { transform: translateY(-3px) rotate(1deg); opacity: 0.6; }
+}
+
+@keyframes springRotate {
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-5px) rotate(90deg); }
+    50% { transform: translateY(-8px) rotate(180deg); }
+    75% { transform: translateY(-3px) rotate(270deg); }
+    100% { transform: translateY(0) rotate(360deg); }
+}
+
+.app-container.spring-theme .chat-messages {
+    position: relative;
+    z-index: 1;
 }
 
 .app-container.spring-theme .custom-titlebar {
@@ -581,4 +754,533 @@
 
 .debug-mode .persistent-effects-layer {
     background: rgba(0, 0, 255, 0.05);
+}
+
+/* ===== 组件保护样式 - 确保特殊组件不受主题影响 ===== */
+
+/* 保护按钮样式 */
+.app-container[class*="-theme"] .header-btn,
+.app-container[class*="-theme"] .titlebar-btn {
+    background: var(--original-btn-bg, rgba(255, 255, 255, 0.2)) !important;
+    color: var(--original-btn-color, white) !important;
+    border: var(--original-btn-border, 1px solid rgba(255, 255, 255, 0.1)) !important;
+}
+
+/* 发送按钮特殊保护 */
+.app-container[class*="-theme"] .send-btn {
+    background: var(--original-send-bg, linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)) !important;
+    color: var(--original-send-color, white) !important;
+    border: var(--original-send-border, 1px solid rgba(255, 255, 255, 0.1)) !important;
+}
+
+/* 表情按钮特殊保护 */
+.app-container[class*="-theme"] .emoji-btn {
+    background: var(--original-emoji-bg, rgba(255, 107, 107, 0.1)) !important;
+    color: var(--original-emoji-color, #ff6b6b) !important;
+    border: var(--original-emoji-border, 1px solid rgba(255, 107, 107, 0.1)) !important;
+}
+
+.app-container[class*="-theme"] .header-btn:hover,
+.app-container[class*="-theme"] .titlebar-btn:hover {
+    background: var(--original-btn-hover-bg, rgba(255, 255, 255, 0.3)) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.app-container[class*="-theme"] .send-btn:hover:not(:disabled) {
+    background: var(--original-send-hover-bg, linear-gradient(135deg, #ff5252 0%, #ff7575 100%)) !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.app-container[class*="-theme"] .emoji-btn:hover {
+    background: var(--original-emoji-hover-bg, rgba(255, 107, 107, 0.2)) !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+}
+
+/* 保护头像样式 */
+.app-container[class*="-theme"] .avatar,
+.app-container[class*="-theme"] .message-avatar .avatar-img {
+    background: var(--original-avatar-bg, linear-gradient(135deg, #fff 0%, #ffe0e6 100%)) !important;
+    border: var(--original-avatar-border, 2px solid rgba(255, 255, 255, 0.3)) !important;
+}
+
+/* 保护输入框样式 */
+.app-container[class*="-theme"] .input-wrapper {
+    background: var(--original-input-bg, rgba(255, 255, 255, 0.95)) !important;
+    border: var(--original-input-border, 1px solid rgba(255, 107, 107, 0.2)) !important;
+}
+
+.app-container[class*="-theme"] #messageInput {
+    background: transparent !important;
+    color: var(--original-input-color, #333) !important;
+}
+
+.app-container[class*="-theme"] #messageInput::placeholder {
+    color: var(--original-placeholder-color, #999) !important;
+}
+
+/* 保护表情选择器 */
+.app-container[class*="-theme"] .emoji-picker {
+    background: var(--original-emoji-bg, rgba(255, 255, 255, 0.98)) !important;
+    border: var(--original-emoji-border, 1px solid rgba(255, 107, 107, 0.2)) !important;
+}
+
+/* 保护加载指示器 */
+.app-container[class*="-theme"] .loading-overlay {
+    background: var(--original-loading-bg, rgba(255, 255, 255, 0.95)) !important;
+}
+
+.app-container[class*="-theme"] .spinner-heart {
+    color: var(--original-spinner-color, #ff6b6b) !important;
+}
+
+/* 保护错误提示 */
+.app-container[class*="-theme"] .error-toast {
+    background: var(--original-error-bg, #fff) !important;
+    color: var(--original-error-color, #e74c3c) !important;
+    border: var(--original-error-border, 1px solid #e74c3c) !important;
+}
+
+/* 确保主题切换时的平滑过渡 */
+.app-container[class*="-theme"] {
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.app-container[class*="-theme"] .chat-container::before,
+.app-container[class*="-theme"] .chat-container::after {
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 响应式设计保护 */
+@media (max-width: 768px) {
+    .app-container[class*="-theme"] .chat-container::before,
+    .app-container[class*="-theme"] .chat-container::after {
+        background-size: 200px 100px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-container[class*="-theme"] .chat-container::before,
+    .app-container[class*="-theme"] .chat-container::after {
+        animation: none !important;
+    }
+}
+
+/* 夜晚主题特殊效果 - 闪烁星星 */
+.app-container.night-theme .chat-container::before {
+    animation: starsMove 60s linear infinite, starsTwinkle 3s ease-in-out infinite;
+}
+
+.app-container.night-theme .chat-container::after {
+    animation: starsMove 90s linear infinite reverse, starsTwinkle 4s ease-in-out infinite 1.5s;
+}
+
+@keyframes starsTwinkle {
+    0%, 100% { opacity: 0.8; }
+    25% { opacity: 1; }
+    50% { opacity: 0.6; }
+    75% { opacity: 1; }
+}
+
+/* 增强春日主题的自然感 */
+.app-container.spring-theme .chat-container::after {
+    content: '🌸🌺🌿🍃🦋';
+    animation: springFloat 8s ease-in-out infinite, springRotate 15s linear infinite;
+}
+
+/* 温暖主题增强效果 */
+.app-container.warm-theme .chat-container::before {
+    animation: warmGlow 6s ease-in-out infinite;
+}
+
+@keyframes warmGlow {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+/* 清凉主题波纹效果 */
+.app-container.cool-theme .chat-container::before {
+    animation: coolWave 8s ease-in-out infinite;
+}
+
+@keyframes coolWave {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+    25% { transform: scale(1.02) rotate(1deg); opacity: 0.9; }
+    50% { transform: scale(1.01) rotate(0deg); opacity: 1; }
+    75% { transform: scale(1.02) rotate(-1deg); opacity: 0.9; }
+}
+
+/* 夕阳主题渐变效果 */
+.app-container.sunset-theme .chat-container::before {
+    animation: sunsetGlow 10s ease-in-out infinite;
+}
+
+@keyframes sunsetGlow {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    33% { opacity: 1; transform: scale(1.01); }
+    66% { opacity: 0.9; transform: scale(1.005); }
+}
+
+/* 夜晚主题下的特殊按钮保护 */
+.app-container.night-theme .send-btn {
+    background: linear-gradient(135deg, #3498db 0%, #5dade2 100%) !important;
+    color: white !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2) !important;
+}
+
+.app-container.night-theme .send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%) !important;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4) !important;
+}
+
+.app-container.night-theme .emoji-btn {
+    background: rgba(52, 152, 219, 0.15) !important;
+    color: #5dade2 !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1) !important;
+}
+
+.app-container.night-theme .emoji-btn:hover {
+    background: rgba(52, 152, 219, 0.25) !important;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3) !important;
+}
+
+.app-container.night-theme .header-btn {
+    background: rgba(52, 152, 219, 0.2) !important;
+    color: #ecf0f1 !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+}
+
+.app-container.night-theme .header-btn:hover {
+    background: rgba(52, 152, 219, 0.3) !important;
+}
+
+/* 春日主题下的特殊按钮保护 */
+.app-container.spring-theme .send-btn {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%) !important;
+    color: white !important;
+}
+
+.app-container.spring-theme .send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #388e3c 0%, #4caf50 100%) !important;
+}
+
+.app-container.spring-theme .emoji-btn {
+    background: rgba(76, 175, 80, 0.1) !important;
+    color: #4caf50 !important;
+    border: 1px solid rgba(76, 175, 80, 0.2) !important;
+}
+
+.app-container.spring-theme .emoji-btn:hover {
+    background: rgba(76, 175, 80, 0.2) !important;
+}
+
+/* 夕阳主题下的特殊按钮保护 */
+.app-container.sunset-theme .send-btn {
+    background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%) !important;
+    color: white !important;
+}
+
+.app-container.sunset-theme .send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d84315 0%, #ff5722 100%) !important;
+}
+
+.app-container.sunset-theme .emoji-btn {
+    background: rgba(255, 87, 34, 0.1) !important;
+    color: #ff5722 !important;
+    border: 1px solid rgba(255, 87, 34, 0.2) !important;
+}
+
+.app-container.sunset-theme .emoji-btn:hover {
+    background: rgba(255, 87, 34, 0.2) !important;
+}
+
+/* 清凉主题下的特殊按钮保护 */
+.app-container.cool-theme .send-btn {
+    background: linear-gradient(135deg, #4ecdc4 0%, #6ec6d9 100%) !important;
+    color: white !important;
+}
+
+.app-container.cool-theme .send-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #26a69a 0%, #4ecdc4 100%) !important;
+}
+
+.app-container.cool-theme .emoji-btn {
+    background: rgba(78, 205, 196, 0.1) !important;
+    color: #4ecdc4 !important;
+    border: 1px solid rgba(78, 205, 196, 0.2) !important;
+}
+
+.app-container.cool-theme .emoji-btn:hover {
+    background: rgba(78, 205, 196, 0.2) !important;
+}
+
+/* 夜晚主题的输入框特殊样式 */
+.app-container.night-theme .input-wrapper {
+    background: rgba(44, 62, 80, 0.9) !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+}
+
+.app-container.night-theme #messageInput {
+    color: #ecf0f1 !important;
+}
+
+.app-container.night-theme #messageInput::placeholder {
+    color: rgba(236, 240, 241, 0.6) !important;
+}
+
+.app-container.night-theme .char-count {
+    color: rgba(236, 240, 241, 0.8) !important;
+}
+
+.app-container.night-theme .input-hint {
+    color: rgba(236, 240, 241, 0.6) !important;
+}
+
+/* 其他主题的输入框增强对比度 */
+.app-container.sunset-theme #messageInput::placeholder {
+    color: rgba(90, 90, 90, 0.8) !important;
+}
+
+.app-container.spring-theme #messageInput::placeholder {
+    color: rgba(46, 125, 50, 0.6) !important;
+}
+
+.app-container.cool-theme #messageInput::placeholder {
+    color: rgba(78, 205, 196, 0.6) !important;
+}
+
+/* ===== 聊天头部随主题变化 ===== */
+
+/* 温暖主题头部 */
+.app-container.warm-theme .chat-header {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%) !important;
+    color: white !important;
+}
+
+/* 清凉主题头部 */
+.app-container.cool-theme .chat-header {
+    background: linear-gradient(135deg, #4ecdc4 0%, #6ec6d9 100%) !important;
+    color: white !important;
+}
+
+/* 夕阳主题头部 */
+.app-container.sunset-theme .chat-header {
+    background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%) !important;
+    color: white !important;
+}
+
+/* 夜晚主题头部 */
+.app-container.night-theme .chat-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    color: #ecf0f1 !important;
+}
+
+/* 春日主题头部 */
+.app-container.spring-theme .chat-header {
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%) !important;
+    color: white !important;
+}
+
+/* 确保头部文字在所有主题下都有足够的对比度 */
+.app-container[class*="-theme"] .chat-title {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.app-container[class*="-theme"] .chat-subtitle {
+    opacity: 0.9 !important;
+}
+
+/* ===== 头像主题适配 ===== */
+
+/* 温暖主题头像 */
+.app-container.warm-theme .chat-header .avatar {
+    background: linear-gradient(135deg, #fff 0%, #ffe0e6 100%) !important;
+    color: #ff6b6b !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 清凉主题头像 */
+.app-container.cool-theme .chat-header .avatar {
+    background: linear-gradient(135deg, #fff 0%, #e0f7fa 100%) !important;
+    color: #4ecdc4 !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 夕阳主题头像 */
+.app-container.sunset-theme .chat-header .avatar {
+    background: linear-gradient(135deg, #fff 0%, #fff3e0 100%) !important;
+    color: #ff5722 !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 夜晚主题头像 */
+.app-container.night-theme .chat-header .avatar {
+    background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%) !important;
+    color: #2c3e50 !important;
+    border: 2px solid rgba(236, 240, 241, 0.8) !important;
+}
+
+/* 春日主题头像 */
+.app-container.spring-theme .chat-header .avatar {
+    background: linear-gradient(135deg, #fff 0%, #e8f5e8 100%) !important;
+    color: #4caf50 !important;
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 状态指示器主题适配 */
+.app-container.night-theme .status-indicator.online {
+    background: #3498db !important;
+    border: 3px solid #ecf0f1 !important;
+}
+
+.app-container.cool-theme .status-indicator.online {
+    background: #4ecdc4 !important;
+}
+
+.app-container.sunset-theme .status-indicator.online {
+    background: #ff7043 !important;
+}
+
+.app-container.spring-theme .status-indicator.online {
+    background: #66bb6a !important;
+}
+
+/* ===== 头部按钮主题专属样式 ===== */
+
+/* 温暖主题头部按钮 */
+.app-container.warm-theme .header-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.1) !important;
+}
+
+.app-container.warm-theme .header-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2) !important;
+}
+
+/* 清凉主题头部按钮 */
+.app-container.cool-theme .header-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.1) !important;
+}
+
+.app-container.cool-theme .header-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.2) !important;
+}
+
+/* 夕阳主题头部按钮 */
+.app-container.sunset-theme .header-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(255, 87, 34, 0.1) !important;
+}
+
+.app-container.sunset-theme .header-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.2) !important;
+}
+
+/* 春日主题头部按钮 */
+.app-container.spring-theme .header-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1) !important;
+}
+
+.app-container.spring-theme .header-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2) !important;
+}
+
+/* ===== 头部信息文字增强 ===== */
+
+/* 确保头部文字在所有主题下都清晰可读 */
+.app-container[class*="-theme"] .header-info {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 为每个主题的头部文字添加特殊适配 */
+.app-container.night-theme .chat-title,
+.app-container.night-theme .chat-subtitle {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+.app-container.warm-theme .chat-subtitle {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.app-container.cool-theme .chat-subtitle {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.app-container.sunset-theme .chat-subtitle {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.app-container.spring-theme .chat-subtitle {
+    color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ===== 头部整体效果增强 ===== */
+
+/* 为每个主题的头部添加微妙的装饰效果 */
+.app-container.warm-theme .chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.app-container.cool-theme .chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.app-container.sunset-theme .chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.app-container.night-theme .chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.5), transparent);
+}
+
+.app-container.spring-theme .chat-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }

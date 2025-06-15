@@ -283,11 +283,10 @@ async updateMaximizeButton() {
         
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'message-avatar';
-        
-        if (type === 'user') {
+          if (type === 'user') {
             avatarDiv.innerHTML = '<i class="fas fa-user"></i>';
         } else {
-            avatarDiv.innerHTML = '<i class="fas fa-heart"></i>';
+            avatarDiv.innerHTML = '<img src="../assets/icon.png" alt="小梦头像" class="avatar-img">';
         }
         
         const contentDiv = document.createElement('div');

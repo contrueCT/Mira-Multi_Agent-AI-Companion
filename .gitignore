@@ -54,3 +54,10 @@ test_memory_db/
 
 # 客户端静态库
 mira-desktop/node_modules/
+BUTTON_VISIBILITY_FIX.md
+.gitignore
+.gitignore
+VISUAL_EFFECTS_IMPROVEMENT.md
+start_theme_test.py
+CHAT_HEADER_THEME_IMPROVEMENT.md
+mira-desktop/web/theme-test.html

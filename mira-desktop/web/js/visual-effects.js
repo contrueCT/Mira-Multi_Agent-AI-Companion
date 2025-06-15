@@ -28,14 +28,21 @@ class VisualEffectsProcessor {
         }
         
         this.init()
-    }
-
-    init() {
+    }    init() {
         // 创建效果容器
         this.createEffectsContainer()
         
         // 从存储中读取用户偏好
         this.loadUserPreferences()
+        
+        // 确保样式保存（延迟执行，等待DOM完全加载）
+        setTimeout(() => {
+            const appContainer = document.querySelector('.app-container')
+            if (appContainer && !appContainer.dataset.originalStylesSaved) {
+                this.saveOriginalStyles()
+                appContainer.dataset.originalStylesSaved = 'true'
+            }
+        }, 1000)
         
         console.log('✨ 视觉效果处理器初始化完成')
     }
@@ -445,11 +452,15 @@ class VisualEffectsProcessor {
             '--theme-brightness': brightness,
             '--theme-saturation': saturation
         }, 'spring-theme')
-    }
-
-    applyThemeStyles(variables, themeName) {
+    }    applyThemeStyles(variables, themeName) {
         const appContainer = document.querySelector('.app-container')
         if (!appContainer) return
+
+        // 保存原始样式（如果还没有保存）
+        if (!appContainer.dataset.originalStylesSaved) {
+            this.saveOriginalStyles()
+            appContainer.dataset.originalStylesSaved = 'true'
+        }
 
         // 移除之前的主题类
         appContainer.classList.remove('warm-theme', 'cool-theme', 'sunset-theme', 'night-theme', 'spring-theme')
@@ -464,6 +475,70 @@ class VisualEffectsProcessor {
         
         // 添加过渡效果
         appContainer.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+        
+        // 记录当前主题
+        this.currentPersistentEffect = themeName
+        
+        console.log(`✨ 应用${themeName}主题`)
+    }    saveOriginalStyles() {
+        const appContainer = document.querySelector('.app-container')
+        if (!appContainer) return
+
+        // 保存头部按钮原始样式
+        const headerBtns = document.querySelectorAll('.header-btn, .titlebar-btn')
+        if (headerBtns.length > 0) {
+            const computedStyle = window.getComputedStyle(headerBtns[0])
+            appContainer.style.setProperty('--original-btn-bg', computedStyle.backgroundColor)
+            appContainer.style.setProperty('--original-btn-color', computedStyle.color)
+            appContainer.style.setProperty('--original-btn-border', computedStyle.border)
+        }
+
+        // 保存发送按钮原始样式
+        const sendBtn = document.querySelector('.send-btn')
+        if (sendBtn) {
+            const computedStyle = window.getComputedStyle(sendBtn)
+            appContainer.style.setProperty('--original-send-bg', computedStyle.background)
+            appContainer.style.setProperty('--original-send-color', computedStyle.color)
+            appContainer.style.setProperty('--original-send-border', computedStyle.border)
+        }
+
+        // 保存表情按钮原始样式
+        const emojiBtn = document.querySelector('.emoji-btn')
+        if (emojiBtn) {
+            const computedStyle = window.getComputedStyle(emojiBtn)
+            appContainer.style.setProperty('--original-emoji-bg', computedStyle.backgroundColor)
+            appContainer.style.setProperty('--original-emoji-color', computedStyle.color)
+            appContainer.style.setProperty('--original-emoji-border', computedStyle.border)
+        }
+
+        // 保存头像原始样式
+        const avatar = document.querySelector('.avatar')
+        if (avatar) {
+            const computedStyle = window.getComputedStyle(avatar)
+            appContainer.style.setProperty('--original-avatar-bg', computedStyle.background)
+            appContainer.style.setProperty('--original-avatar-border', computedStyle.border)
+        }
+
+        // 保存输入框原始样式
+        const inputWrapper = document.querySelector('.input-wrapper')
+        const messageInput = document.querySelector('#messageInput')
+        if (inputWrapper && messageInput) {
+            const wrapperStyle = window.getComputedStyle(inputWrapper)
+            const inputStyle = window.getComputedStyle(messageInput)
+            appContainer.style.setProperty('--original-input-bg', wrapperStyle.backgroundColor)
+            appContainer.style.setProperty('--original-input-border', wrapperStyle.border)
+            appContainer.style.setProperty('--original-input-color', inputStyle.color)
+        }
+
+        // 保存其他组件原始样式
+        const emojiPicker = document.querySelector('.emoji-picker')
+        if (emojiPicker) {
+            const computedStyle = window.getComputedStyle(emojiPicker)
+            appContainer.style.setProperty('--original-emoji-picker-bg', computedStyle.backgroundColor)
+            appContainer.style.setProperty('--original-emoji-picker-border', computedStyle.border)
+        }
+
+        console.log('📦 原始样式已保存（包含按钮特殊样式）')
     }
 
     // ==================== 清理方法 ====================
@@ -484,9 +559,7 @@ class VisualEffectsProcessor {
         }
         
         this.activeTemporaryEffects.delete(effectId)
-    }
-
-    async cleanupPersistentEffect() {
+    }    async cleanupPersistentEffect() {
         const appContainer = document.querySelector('.app-container')
         if (!appContainer) return
 
@@ -510,8 +583,8 @@ class VisualEffectsProcessor {
         Object.entries(defaultVariables).forEach(([property, value]) => {
             appContainer.style.setProperty(property, value)
         })
-        
-        this.currentPersistentEffect = null
+          this.currentPersistentEffect = null
+        console.log('🔄 持久效果已清理，恢复默认主题')
     }
 
     // ==================== 用户偏好设置 ====================
