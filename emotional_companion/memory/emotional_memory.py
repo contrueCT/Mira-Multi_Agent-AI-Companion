@@ -103,7 +103,13 @@ class EmotionalMemorySystem:
         memory_id = f"episodic_{timestamp}"
         
         # 创建记忆文本
-        memory_text = f"用户: {user_message}\n智能体: {agent_response}"
+        # 格式化时间为中文格式
+        dt = datetime.fromisoformat(timestamp)
+        weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        weekday_name = weekdays[dt.weekday()]
+        formatted_time = f"{dt.year}年{dt.month}月{dt.day}日 {weekday_name} {dt.strftime('%H:%M')}"
+        
+        memory_text = f"时间：{formatted_time}\n用户: {user_message}\n智能体: {agent_response}"
         if user_emotion:
             emotion_text = f"用户情绪: {user_emotion.get('emotion', 'unknown')}"
             memory_text += f"\n{emotion_text}"
