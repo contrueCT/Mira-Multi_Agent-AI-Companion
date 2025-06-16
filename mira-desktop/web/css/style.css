@@ -8,8 +8,7 @@
 html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden;
-    background: transparent; /* 改为透明 */
+    overflow: hidden;    background: #f5f5f5; /* 匹配Electron窗口背景 */
 }
 
 body {
@@ -17,20 +16,23 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 8px; /* 为圆角和阴影留出空间 */
+    padding: 8px; /* 减少内边距 */
 }
 
 .app-container {
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-radius: 16px; /* 减少圆角 */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        /* 使用简单阴影避免GPU加速 */
+        0 8px 32px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    /* 移除backdrop-filter以避免GPU加速 */
 }
 
 /* ===== 自定义标题栏 ===== */
@@ -38,10 +40,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 32px;
+    height: 36px; /* 稍微增加高度 */
     background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
     color: white;
-    padding: 0 8px;
+    padding: 0 12px; /* 增加内边距 */
     -webkit-app-region: drag; /* 可拖拽区域 */
     -webkit-user-select: none; /* Safari兼容性 */
     -moz-user-select: none;    /* Firefox兼容性 */
@@ -49,8 +51,9 @@ body {
     user-select: none;         /* 标准属性 */
     position: relative;
     z-index: 1000;
-    border-radius: 16px 16px 0 0; /* 只给顶部添加圆角 */
+    border-radius: 16px 16px 0 0; /* 匹配应用容器的圆角 */
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加标题栏阴影 */
 }
 
 .titlebar-content {
@@ -72,8 +75,8 @@ body {
 }
 
 .titlebar-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px; /* 增加按钮大小 */
+    height: 36px;
     border: none;
     background: transparent;
     color: white;
@@ -81,21 +84,25 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
-    transition: background-color 0.2s ease;
-    border-radius: 6px; /* 给按钮添加小圆角 */
+    font-size: 11px; /* 稍微增加图标大小 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 使用更平滑的过渡 */
+    border-radius: 8px; /* 增加按钮圆角 */
+    margin-left: 4px; /* 按钮之间的间距 */
 }
 
 .titlebar-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05); /* 添加悬停缩放效果 */
 }
 
 .close-btn:hover {
     background: #e74c3c !important;
+    transform: scale(1.05);
 }
 
 .maximize-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
 .minimize-btn:hover {
@@ -179,9 +186,8 @@ body {
 .chat-container {
     flex: 1;
     background: rgba(255, 255, 255, 0.95);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border-radius: 0 0 16px 16px; /* 只保留底部圆角 */
+    /* 移除backdrop-filter避免GPU加速 */
+    border-radius: 0 0 16px 16px; /* 匹配应用容器的圆角 */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -202,7 +208,7 @@ body {
     background: linear-gradient(135deg, rgba(255, 154, 158, 0.1) 0%, rgba(254, 207, 239, 0.1) 100%);
     pointer-events: none;
     z-index: 0;
-    border-radius: 0 0 12px 12px; /* 确保渐变也有圆角 */
+    border-radius: 0 0 16px 16px; /* 匹配聊天容器的圆角 */
 }
 
 /* ===== 顶部标题栏 ===== */

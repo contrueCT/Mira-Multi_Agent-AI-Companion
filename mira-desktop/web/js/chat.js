@@ -178,13 +178,12 @@ async updateMaximizeButton() {
                 this.hideEmojiPicker();
             }
         });
-        
-        // 头部按钮事件
+          // 头部按钮事件
         document.getElementById('settingsBtn').addEventListener('click', () => {
             if (this.isElectron) {
-                this.showSimpleSettingsPrompt()  // 桌面端显示设置
+                this.openSettingsWindow()  // 桌面端打开设置窗口
             } else {
-                this.showToast('设置功能正在开发中...', 'info')  // 浏览器端提示
+                window.open('settings.html', '_blank')  // 浏览器端打开设置页面
             }
         })
           document.getElementById('historyBtn').addEventListener('click', () => {
@@ -197,6 +196,17 @@ async updateMaximizeButton() {
                 this.toggleVisualEffects();
             });
             this.updateEffectsToggleButton();
+        }    }
+
+    openSettingsWindow() {
+        // 在Electron中打开设置窗口
+        if (this.isElectron && window.electronAPI) {
+            // 可以通过IPC让主进程打开设置窗口
+            // 暂时使用当前窗口导航到设置页面
+            window.location.href = 'settings.html'
+        } else {
+            // 备用方案：简单设置提示
+            this.showSimpleSettingsPrompt()
         }
     }
 

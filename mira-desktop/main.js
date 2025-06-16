@@ -2,6 +2,27 @@ const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 const fs = require('fs')
 
+// 立即禁用硬件加速以避免持续的GPU错误
+app.disableHardwareAcceleration()
+
+// 添加更严格的GPU禁用参数
+app.commandLine.appendSwitch('--disable-gpu')
+app.commandLine.appendSwitch('--disable-gpu-compositing')
+app.commandLine.appendSwitch('--disable-gpu-rasterization')
+app.commandLine.appendSwitch('--disable-gpu-sandbox')
+app.commandLine.appendSwitch('--disable-software-rasterizer')
+app.commandLine.appendSwitch('--disable-background-timer-throttling')
+app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows')
+app.commandLine.appendSwitch('--disable-renderer-backgrounding')
+app.commandLine.appendSwitch('--disable-features=VizDisplayCompositor')
+
+// 使用新的child-process-gone事件代替已弃用的gpu-process-crashed
+app.on('child-process-gone', (event, details) => {
+    if (details.type === 'GPU') {
+        console.log('⚠️ GPU子进程异常退出，已预先禁用硬件加速')
+    }
+})
+
 let mainWindow
 
 // 基础配置
@@ -62,19 +83,24 @@ function createWindow() {
             console.warn('⚠️ 图标文件不存在:', iconPath);
             iconPath = undefined;
         }
-    }
-    
-    mainWindow = new BrowserWindow({
+    }    mainWindow = new BrowserWindow({
         width: config.windowBounds.width,
         height: config.windowBounds.height,
         minWidth: 800,
         minHeight: 600,
         frame: false, // 无边框窗口
-        transparent: true, // 透明窗口
+        backgroundColor: '#f5f5f5', // 使用浅色背景代替透明
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            // 强制使用软件渲染
+            enableRemoteModule: false,
+            backgroundThrottling: false,
+            offscreen: false,
+            experimentalFeatures: false,
+            // 禁用硬件加速相关功能
+            hardwareAcceleration: false
         },
         icon: iconPath,
         titleBarStyle: 'hidden', // 隐藏标题栏

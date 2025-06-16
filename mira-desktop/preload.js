@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     windowClose: () => ipcRenderer.invoke('window-close'),
     windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
     
+    // 设置窗口
+    openSettings: () => ipcRenderer.invoke('open-settings'),
+
     // 事件监听
     onConfigChanged: (callback) => {
         ipcRenderer.on('config-changed', (event, data) => callback(data))

@@ -18,5 +18,11 @@
         "api_key": "",
         "base_url": "https://api.siliconflow.cn/v1",
         "api_type": "openai"
+    },
+    {
+        "model": "Qwen/Qwen3-235B-A22B",
+        "api_key": "",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "api_type": "openai"
     }
 ]

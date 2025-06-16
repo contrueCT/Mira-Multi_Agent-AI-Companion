@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小梦设置</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 自定义标题栏 -->
+        <div class="custom-titlebar">
+            <div class="titlebar-content">
+                <div class="titlebar-title">小梦设置</div>
+            </div>
+            <div class="titlebar-controls">
+                <button class="titlebar-btn minimize-btn" id="minimizeBtn" title="最小化">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="titlebar-btn maximize-btn" id="maximizeBtn" title="最大化">
+                    <i class="fas fa-square" id="maximizeIcon"></i>
+                </button>
+                <button class="titlebar-btn close-btn" id="closeBtn" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- 设置主容器 -->
+        <div class="settings-container">
+            <!-- 侧边导航 -->
+            <div class="settings-sidebar">
+                <div class="sidebar-header">
+                    <h2>设置</h2>
+                </div>                <div class="sidebar-menu">
+                    <div class="menu-item active" data-tab="llm">
+                        <i class="fas fa-robot"></i>
+                        <span>AI模型配置</span>
+                    </div>
+                    <div class="menu-item" data-tab="environment">
+                        <i class="fas fa-cog"></i>
+                        <span>环境配置</span>
+                    </div>
+                    <div class="menu-item" data-tab="preferences">
+                        <i class="fas fa-user-cog"></i>
+                        <span>用户偏好</span>
+                    </div>
+                    <div class="menu-item" data-tab="backup">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>备份恢复</span>
+                    </div>
+                </div>
+                
+                <!-- 返回主界面按钮 -->
+                <div class="sidebar-footer">
+                    <button class="btn btn-secondary return-btn" id="returnToMainBtn">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>返回主界面</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 设置内容区 -->
+            <div class="settings-content">
+                <!-- AI模型配置 -->
+                <div class="settings-tab active" id="llm-tab">
+                    <div class="tab-header">
+                        <h3>AI模型配置</h3>
+                        <p>配置您的AI模型API信息</p>
+                    </div>
+                    
+                    <div class="config-section">
+                        <div class="section-header">
+                            <h4>LLM配置列表</h4>
+                            <button class="btn btn-primary" id="addLLMBtn">
+                                <i class="fas fa-plus"></i> 添加配置
+                            </button>
+                        </div>
+                        
+                        <div class="llm-configs" id="llmConfigs">
+                            <!-- LLM配置项将动态添加到这里 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 环境配置 -->
+                <div class="settings-tab" id="environment-tab">
+                    <div class="tab-header">
+                        <h3>环境配置</h3>
+                        <p>配置系统环境变量和基础设置</p>
+                    </div>
+                    
+                    <form class="config-form" id="environmentForm">
+                        <div class="form-group">
+                            <label for="userNameInput">用户名称</label>
+                            <input type="text" id="userNameInput" placeholder="请输入您的名称">
+                            <small>AI将使用此名称称呼您</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="agentNameInput">AI助手名称</label>
+                            <input type="text" id="agentNameInput" placeholder="请输入AI助手的名称">
+                            <small>AI助手的名称</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="agentDescriptionInput">AI助手描述</label>
+                            <textarea id="agentDescriptionInput" rows="6" placeholder="请输入AI助手的性格描述和设定"></textarea>
+                            <small>详细描述AI助手的性格特点和行为方式</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chromaDbDirInput">数据库目录</label>
+                            <input type="text" id="chromaDbDirInput" placeholder="./memory_db">
+                            <small>ChromaDB数据库存储目录</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 保存配置
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="resetEnvironmentBtn">
+                                <i class="fas fa-undo"></i> 重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 用户偏好 -->
+                <div class="settings-tab" id="preferences-tab">
+                    <div class="tab-header">
+                        <h3>用户偏好</h3>
+                        <p>个性化设置和界面偏好</p>
+                    </div>
+                    
+                    <form class="config-form" id="preferencesForm">
+                        <div class="form-group">
+                            <label for="themeSelect">界面主题</label>
+                            <select id="themeSelect">
+                                <option value="default">默认主题</option>
+                                <option value="warm">温暖主题</option>
+                                <option value="cool">清凉主题</option>
+                                <option value="sunset">夕阳主题</option>
+                                <option value="night">夜晚主题</option>
+                                <option value="spring">春日主题</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="languageSelect">界面语言</label>
+                            <select id="languageSelect">
+                                <option value="zh-CN">简体中文</option>
+                                <option value="en-US">English</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="visualEffectsCheckbox">
+                                <span class="checkmark"></span>
+                                启用视觉效果                            </label>
+                            <small>开启或关闭聊天界面的视觉特效</small>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="notificationCheckbox">
+                                <span class="checkmark"></span>
+                                启用通知
+                            </label>
+                            <small>接收系统通知和提醒</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 保存偏好
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="resetPreferencesBtn">
+                                <i class="fas fa-undo"></i> 恢复默认
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 备份恢复 -->
+                <div class="settings-tab" id="backup-tab">
+                    <div class="tab-header">
+                        <h3>备份与恢复</h3>
+                        <p>管理您的配置备份</p>
+                    </div>
+                    
+                    <div class="backup-section">
+                        <div class="backup-card">
+                            <h4>创建备份</h4>
+                            <p>备份当前的所有配置设置</p>
+                            <button class="btn btn-primary" id="createBackupBtn">
+                                <i class="fas fa-download"></i> 创建备份
+                            </button>
+                        </div>
+                        
+                        <div class="backup-card">
+                            <h4>恢复备份</h4>
+                            <p>从备份文件恢复配置</p>
+                            <input type="file" id="restoreFileInput" accept=".zip,.json" style="display: none;">
+                            <button class="btn btn-secondary" id="restoreBackupBtn">
+                                <i class="fas fa-upload"></i> 选择备份文件
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="backup-history" id="backupHistory">
+                        <h4>备份历史</h4>
+                        <div class="backup-list">
+                            <!-- 备份历史将动态添加到这里 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LLM配置模态框 -->
+    <div class="modal" id="llmConfigModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">添加LLM配置</h3>
+                <button type="button" class="modal-close" id="modalCloseBtn" title="关闭">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="llmConfigForm">
+                    <div class="form-group">
+                        <label for="modelInput">模型名称</label>
+                        <input type="text" id="modelInput" placeholder="例如: Qwen/Qwen3-32B" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apiKeyInput">API密钥</label>
+                        <input type="password" id="apiKeyInput" placeholder="请输入API密钥" required>
+                        <button type="button" class="toggle-password" id="toggleApiKey" title="显示/隐藏密码">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="baseUrlInput">Base URL</label>
+                        <input type="url" id="baseUrlInput" placeholder="https://api.example.com/v1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apiTypeInput">API类型</label>
+                        <select id="apiTypeInput">
+                            <option value="openai">OpenAI</option>
+                            <option value="azure">Azure</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="testConnectionBtn">
+                    <i class="fas fa-plug"></i> 测试连接
+                </button>
+                <button type="button" class="btn btn-secondary" id="cancelModalBtn">取消</button>
+                <button type="button" class="btn btn-primary" id="saveModalBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-heart">
+                <i class="fas fa-heart"></i>
+            </div>
+            <p id="loadingText">正在加载...</p>
+        </div>
+    </div>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>    </div>
+
+    <script src="js/performance-monitor.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>

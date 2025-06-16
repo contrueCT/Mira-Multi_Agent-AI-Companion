@@ -743,6 +743,48 @@
     }
 }
 
+/* ===== 性能优化模式 ===== */
+/* 全局禁用硬件加速以避免GPU错误 */
+.visual-effects-container *,
+.app-container * {
+    transform: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    will-change: auto !important;
+}
+
+.performance-mode-low .visual-effects-container {
+    /* 低性能模式：禁用复杂效果 */
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+.performance-mode-low .celebration-particle,
+.performance-mode-low .floating-heart-particle,
+.performance-mode-low .sparkle-particle,
+.performance-mode-low .petal-particle {
+    animation-duration: 1s !important;
+    will-change: auto !important;
+}
+
+.performance-mode-low .bubble-particle {
+    animation-duration: 2s !important;
+    will-change: auto !important;
+}
+
+/* 硬件加速优化 */
+.gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+}
+
+.no-gpu-acceleration {
+    will-change: auto;
+    transform: none;
+}
+
 /* ===== 调试样式 (仅开发环境) ===== */
 .debug-mode .visual-effects-container {
     border: 2px dashed rgba(255, 0, 0, 0.3);

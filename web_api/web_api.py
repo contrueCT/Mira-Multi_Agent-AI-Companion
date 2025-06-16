@@ -23,9 +23,12 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from emotional_companion.agents.conversation_handler import ConversationHandler
+from web_api.config_manager import ConfigManager
 from web_api.models import (
     ChatRequest, ChatResponse, EmotionalState, 
-    ChatHistory, ChatHistoryItem, HealthStatus, ErrorResponse
+    ChatHistory, ChatHistoryItem, HealthStatus, ErrorResponse,
+    LLMConfig, EnvironmentConfig, UserPreferences, SystemConfig,
+    ConfigUpdateRequest, ConfigResponse
 )
 
 
@@ -37,6 +40,7 @@ class WebAPIServer:
         self.start_time = time.time()
         self.chat_history: List[ChatHistoryItem] = []
         self.max_history_size = 1000  # 最大历史记录数量
+        self.config_manager = ConfigManager()  # 新增配置管理器
         
     async def initialize(self):
         """初始化ConversationHandler"""
@@ -325,6 +329,244 @@ async def get_stats():
         raise HTTPException(
             status_code=500,
             detail=f"获取统计信息时发生错误: {str(e)}"
+        )
+
+
+# ===== 配置管理接口 =====
+
+@app.get("/api/config", response_model=SystemConfig)
+async def get_system_config():
+    """
+    获取完整的系统配置
+    """
+    try:
+        config = server.config_manager.get_system_config()
+        return config
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取系统配置失败: {str(e)}"
+        )
+
+
+@app.get("/api/config/llm", response_model=List[LLMConfig])
+async def get_llm_configs():
+    """
+    获取LLM配置列表
+    """
+    try:
+        configs = server.config_manager.get_llm_configs()
+        return configs
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取LLM配置失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/llm", response_model=ConfigResponse)
+async def update_llm_configs(configs: List[LLMConfig]):
+    """
+    更新LLM配置列表
+    """
+    try:
+        # 验证配置
+        for config in configs:
+            is_valid, message = server.config_manager.validate_llm_config(config)
+            if not is_valid:
+                return ConfigResponse(
+                    success=False,
+                    message=f"配置验证失败: {message}",
+                    config=None
+                )
+        
+        # 保存配置
+        success = server.config_manager.save_llm_configs(configs)
+        
+        if success:
+            return ConfigResponse(
+                success=True,
+                message="LLM配置更新成功",
+                config={"configs": [config.dict() for config in configs]}
+            )
+        else:
+            return ConfigResponse(
+                success=False,
+                message="LLM配置保存失败",
+                config=None
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"更新LLM配置失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/llm/test", response_model=dict)
+async def test_llm_config(config: LLMConfig):
+    """
+    测试LLM配置连接
+    """
+    try:
+        is_valid, message = server.config_manager.validate_llm_config(config)
+        if not is_valid:
+            return {
+                "success": False,
+                "message": f"配置验证失败: {message}"
+            }
+        
+        success, test_message = server.config_manager.test_llm_connection(config)
+        return {
+            "success": success,
+            "message": test_message
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"测试连接失败: {str(e)}"
+        }
+
+
+@app.get("/api/config/environment", response_model=EnvironmentConfig)
+async def get_environment_config():
+    """
+    获取环境配置
+    """
+    try:
+        config = server.config_manager.get_environment_config()
+        return config
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取环境配置失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/environment", response_model=ConfigResponse)
+async def update_environment_config(config: EnvironmentConfig):
+    """
+    更新环境配置
+    """
+    try:
+        success = server.config_manager.save_environment_config(config)
+        
+        if success:
+            return ConfigResponse(
+                success=True,
+                message="环境配置更新成功",
+                config=config.dict()
+            )
+        else:
+            return ConfigResponse(
+                success=False,
+                message="环境配置保存失败",
+                config=None
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"更新环境配置失败: {str(e)}"
+        )
+
+
+@app.get("/api/config/preferences", response_model=UserPreferences)
+async def get_user_preferences():
+    """
+    获取用户偏好配置
+    """
+    try:
+        preferences = server.config_manager.get_user_preferences()
+        return preferences
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取用户偏好失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/preferences", response_model=ConfigResponse)
+async def update_user_preferences(preferences: UserPreferences):
+    """
+    更新用户偏好配置
+    """
+    try:
+        success = server.config_manager.save_user_preferences(preferences)
+        
+        if success:
+            return ConfigResponse(
+                success=True,
+                message="用户偏好更新成功",
+                config=preferences.dict()
+            )
+        else:
+            return ConfigResponse(
+                success=False,
+                message="用户偏好保存失败",
+                config=None
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"更新用户偏好失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/backup", response_model=dict)
+async def backup_configs():
+    """
+    备份所有配置文件
+    """
+    try:
+        backup_path = server.config_manager.backup_configs()
+        
+        if backup_path:
+            return {
+                "success": True,
+                "message": "配置备份成功",
+                "backup_path": backup_path
+            }
+        else:
+            return {
+                "success": False,
+                "message": "配置备份失败"
+            }
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"备份配置失败: {str(e)}"
+        )
+
+
+@app.post("/api/config/restore", response_model=ConfigResponse)
+async def restore_configs(backup_path: str):
+    """
+    从备份恢复配置
+    """
+    try:
+        success = server.config_manager.restore_configs(backup_path)
+        
+        if success:
+            return ConfigResponse(
+                success=True,
+                message="配置恢复成功",
+                config=None
+            )
+        else:
+            return ConfigResponse(
+                success=False,
+                message="配置恢复失败",
+                config=None
+            )
+            
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"恢复配置失败: {str(e)}"
         )
 
 

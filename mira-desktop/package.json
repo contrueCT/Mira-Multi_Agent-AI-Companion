@@ -5,9 +5,10 @@
   "description": "小梦桌面客户端",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --disable-gpu --disable-hardware-acceleration",
+    "start-safe": "electron . --disable-gpu --disable-hardware-acceleration --force-cpu-draw --disable-software-rasterizer",
     "build": "electron-builder",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev --disable-gpu"
   },
   "dependencies": {
 
@@ -31,6 +32,16 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "小梦"
     },
     "mac": {
       "icon": "assets/icon.icns"

@@ -3,12 +3,16 @@
  * 负责执行智能体发送的视觉效果指令
  */
 
-class VisualEffectsProcessor {
-    constructor() {
+class VisualEffectsProcessor {    constructor() {
         this.effectsContainer = null
         this.currentPersistentEffect = null
         this.isEffectsEnabled = true
         this.activeTemporaryEffects = new Set()
+        
+        // 性能优化相关
+        this.performanceMode = this.detectPerformanceMode()
+        this.maxConcurrentEffects = this.performanceMode === 'low' ? 3 : 8
+        this.animationCleanupTimeout = null
         
         // 效果执行函数映射
         this.effectHandlers = {
@@ -24,16 +28,57 @@ class VisualEffectsProcessor {
             'cool_theme': this.applyCoolTheme.bind(this),
             'sunset_theme': this.applySunsetTheme.bind(this),
             'night_theme': this.applyNightTheme.bind(this),
-            'spring_theme': this.applySpringTheme.bind(this)
-        }
+            'spring_theme': this.applySpringTheme.bind(this)        }
         
         this.init()
+    }
+
+    /**
+     * 检测设备性能模式
+     */
+    detectPerformanceMode() {
+        // 检测设备性能指标
+        const hardwareConcurrency = navigator.hardwareConcurrency || 2
+        const memory = navigator.deviceMemory || 2
+        
+        // 检测是否为低端设备
+        if (hardwareConcurrency <= 2 || memory <= 2) {
+            console.log('🐌 检测到低性能设备，启用性能优化模式')
+            return 'low'
+        } else if (hardwareConcurrency <= 4 || memory <= 4) {
+            console.log('⚡ 检测到中等性能设备，启用平衡模式')
+            return 'medium'
+        } else {
+            console.log('🚀 检测到高性能设备，启用完整效果模式')
+            return 'high'
+        }
+    }
+    
+    /**
+     * 清理过多的临时效果以提高性能
+     */
+    cleanupExcessiveEffects() {
+        if (this.activeTemporaryEffects.size <= this.maxConcurrentEffects) {
+            return
+        }
+        
+        const effectsToRemove = Array.from(this.activeTemporaryEffects).slice(0, 
+            this.activeTemporaryEffects.size - this.maxConcurrentEffects)
+        
+        effectsToRemove.forEach(effectId => {
+            this.cleanupTemporaryEffect(effectId)
+        })
+        
+        console.log(`🧹 清理了 ${effectsToRemove.length} 个多余的视觉效果`)
     }    init() {
         // 创建效果容器
         this.createEffectsContainer()
         
         // 从存储中读取用户偏好
         this.loadUserPreferences()
+        
+        // 应用性能模式CSS类
+        this.applyPerformanceMode()
         
         // 确保样式保存（延迟执行，等待DOM完全加载）
         setTimeout(() => {
@@ -45,6 +90,17 @@ class VisualEffectsProcessor {
         }, 1000)
         
         console.log('✨ 视觉效果处理器初始化完成')
+    }
+
+    /**
+     * 应用性能模式CSS类
+     */
+    applyPerformanceMode() {
+        const body = document.body
+        body.classList.remove('performance-mode-low', 'performance-mode-medium', 'performance-mode-high')
+        body.classList.add(`performance-mode-${this.performanceMode}`)
+        
+        console.log(`🎛️ 应用性能模式: ${this.performanceMode}`)
     }
 
     createEffectsContainer() {
@@ -100,23 +156,27 @@ class VisualEffectsProcessor {
         } catch (error) {
             console.error('执行视觉效果时发生错误:', error)
         }
-    }
-
-    /**
+    }    /**
      * 应用临时效果
      */
     async applyTemporaryEffect(command, handler) {
+        // 清理过多的效果以提高性能
+        this.cleanupExcessiveEffects()
+        
         const effectId = `temp-${command.effect_name}-${Date.now()}`
         this.activeTemporaryEffects.add(effectId)
         
         try {
-            await handler(command, effectId)
+            // 根据性能模式调整效果参数
+            const optimizedCommand = this.optimizeEffectForPerformance(command)
+            
+            await handler(optimizedCommand, effectId)
             
             // 设置自动清理
-            if (command.duration > 0) {
+            if (optimizedCommand.duration > 0) {
                 setTimeout(() => {
                     this.cleanupTemporaryEffect(effectId)
-                }, command.duration)
+                }, optimizedCommand.duration)
             }
         } catch (error) {
             console.error(`临时效果执行失败: ${command.effect_name}`, error)
@@ -138,7 +198,35 @@ class VisualEffectsProcessor {
             this.currentPersistentEffect = command.effect_name
         } catch (error) {
             console.error(`持久效果应用失败: ${command.effect_name}`, error)
+        }    }
+
+    /**
+     * 根据设备性能优化效果参数
+     */
+    optimizeEffectForPerformance(command) {
+        const optimized = { ...command }
+        
+        switch (this.performanceMode) {
+            case 'low':
+                // 低性能模式：大幅简化效果
+                optimized.duration = Math.min(optimized.duration || 3000, 2000)
+                optimized.intensity = Math.min(optimized.intensity || 0.8, 0.5)
+                optimized.particle_count = Math.min(optimized.particle_count || 20, 8)
+                break
+                
+            case 'medium':
+                // 中等性能模式：适度优化
+                optimized.duration = Math.min(optimized.duration || 3000, 3000)
+                optimized.intensity = Math.min(optimized.intensity || 0.8, 0.7)
+                optimized.particle_count = Math.min(optimized.particle_count || 20, 15)
+                break
+                
+            case 'high':
+                // 高性能模式：保持原有效果
+                break
         }
+        
+        return optimized
     }
 
     /**
