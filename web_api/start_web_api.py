@@ -73,8 +73,8 @@ def check_config():
         llm_configs = config_manager.get_llm_configs()
         
         if not llm_configs:
-            print("❌ 未找到LLM配置")
-            return False
+            print("⚠️  未找到LLM配置，但服务仍将启动以便通过客户端配置")
+            return True
             
         # 检查是否有空的API密钥
         empty_keys = 0
@@ -84,17 +84,19 @@ def check_config():
                 
         if empty_keys > 0:
             print(f"⚠️  发现 {empty_keys} 个API配置缺少密钥")
-            print("📝 请编辑配置文件并填入你的API密钥:")
-            print(f"   {config_manager.llm_config_file}")
-            print("💡 配置完成后重启应用即可")
-            return False
+            print("📝 可以通过以下方式配置API密钥:")
+            print(f"   1. 直接编辑配置文件: {config_manager.llm_config_file}")
+            print(f"   2. 通过Web界面配置: http://localhost:8000/static/settings.html")
+            print("💡 服务将正常启动，配置完成后功能即可使用")
+            return True
         else:
             print(f"✅ 找到 {len(llm_configs)} 个有效的API配置")
             return True
             
     except Exception as e:
-        print(f"❌ 检查配置时发生错误: {e}")
-        return False
+        print(f"⚠️  检查配置时发生错误: {e}")
+        print("💡 服务仍将启动以便通过客户端配置")
+        return True
 
 def start_server():
     """启动Web API服务器"""
@@ -143,11 +145,8 @@ def main():
     if not check_dependencies():
         return
     
-    # 检查配置
-    if not check_config():
-        print("\n❗ 配置检查失败，请完成配置后重新启动")
-        print("📚 配置指南: https://github.com/your-repo/docs/config.md")
-        return
+    # 检查配置（但不阻止启动）
+    check_config()
     
     # 启动服务器
     start_server()

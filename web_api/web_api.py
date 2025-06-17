@@ -58,17 +58,46 @@ class WebAPIServer:
                 os.getenv('CONFIG_DIR', os.path.join(project_root, "configs")), 
                 "OAI_CONFIG_LIST.json"
             )
-            self.conversation_handler = ConversationHandler(config_path)
             
-            # 启动后台任务
-            self.conversation_handler.start_background_tasks()
-            
-            print(f"✅ ConversationHandler初始化成功")
-            print(f"✅ 配置文件: {config_path}")
+            # 检查配置文件是否有有效的API密钥
+            if self._has_valid_api_keys(config_path):
+                self.conversation_handler = ConversationHandler(config_path)
+                
+                # 启动后台任务
+                self.conversation_handler.start_background_tasks()
+                
+                print(f"✅ ConversationHandler初始化成功")
+                print(f"✅ 配置文件: {config_path}")
+            else:
+                print(f"⚠️  API配置不完整，ConversationHandler暂未初始化")
+                print(f"💡 可通过Web界面配置API密钥后重启服务")
+                self.conversation_handler = None
             
         except Exception as e:
-            print(f"❌ ConversationHandler初始化失败: {e}")
-            raise
+            print(f"⚠️  ConversationHandler初始化失败: {e}")
+            print(f"💡 Web服务器仍将启动，可通过界面配置后重启")
+            self.conversation_handler = None
+    
+    def _has_valid_api_keys(self, config_path: str) -> bool:
+        """检查是否有有效的API密钥"""
+        try:
+            import json
+            if not os.path.exists(config_path):
+                return False
+                
+            with open(config_path, 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+                
+            if not configs:
+                return False
+                
+            # 检查是否至少有一个有效的API密钥
+            for config in configs:
+                if config.get('api_key') and config.get('api_key').strip():
+                    return True
+            return False
+        except Exception:
+            return False
     
     async def cleanup(self):
         """清理资源"""
@@ -153,7 +182,16 @@ async def chat_endpoint(request: ChatRequest):
     if not server.conversation_handler:
         raise HTTPException(
             status_code=503, 
-            detail="ConversationHandler未初始化"
+            detail={
+                "error": "ConversationHandler未初始化",
+                "message": "请先配置API密钥后重启服务",
+                "config_url": "/static/settings.html",
+                "suggestions": [
+                    "1. 通过Web界面配置API密钥: /static/settings.html",
+                    "2. 直接编辑配置文件后重启服务",
+                    "3. 检查API密钥是否正确填写"
+                ]
+            }
         )
     
     try:
@@ -303,13 +341,22 @@ async def health_check():
     """
     uptime = time.time() - server.start_time
     
+    # 检查API配置状态
+    config_path = os.path.join(
+        os.getenv('CONFIG_DIR', os.path.join(project_root, "configs")), 
+        "OAI_CONFIG_LIST.json"
+    )
+    has_valid_keys = server._has_valid_api_keys(config_path)
+    
     services = {
-        "conversation_handler": "healthy" if server.conversation_handler else "unhealthy",
+        "conversation_handler": "healthy" if server.conversation_handler else "not_configured",
         "chat_history": "healthy",
-        "api_server": "healthy"
+        "api_server": "healthy",
+        "api_config": "healthy" if has_valid_keys else "needs_configuration"
     }
     
-    overall_status = "healthy" if all(status == "healthy" for status in services.values()) else "unhealthy"
+    # 如果ConversationHandler未初始化但是服务器运行正常，仍然返回部分可用状态
+    overall_status = "healthy" if server.conversation_handler else "partial"
     
     return HealthStatus(
         status=overall_status,

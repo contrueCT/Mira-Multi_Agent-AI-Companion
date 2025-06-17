@@ -51,8 +51,7 @@ class ConfigManager:
             
         # 创建环境配置文件
         if not self.env_file.exists():
-            self._create_default_env_config()
-            
+            self._create_default_env_config()            
         # 创建用户配置文件
         if not self.user_config_file.exists():
             self._create_default_user_config()
@@ -61,64 +60,34 @@ class ConfigManager:
         """创建默认的LLM配置文件"""
         default_config = [
             {
-                "model": "Qwen/Qwen2.5-72B-Instruct",
+                "model": "Qwen/Qwen3-235B-A22B",
                 "api_key": "",
                 "base_url": "https://api.siliconflow.cn/v1",
-                "api_type": "openai",
-                "description": "最强模型 - 用于复杂推理和重要对话"
+                "api_type": "openai"
             },
             {
-                "model": "Qwen/Qwen2.5-7B-Instruct", 
+                "model": "Qwen/Qwen3-8B", 
                 "api_key": "",
                 "base_url": "https://api.siliconflow.cn/v1",
-                "api_type": "openai",
-                "description": "轻量模型 - 用于简单任务以节省成本"
+                "api_type": "openai"
             },
             {
-                "model": "Qwen/Qwen2.5-32B-Instruct",
+                "model": "Qwen/Qwen3-235B-A22B",
                 "api_key": "",
                 "base_url": "https://api.siliconflow.cn/v1", 
-                "api_type": "openai",
-                "description": "中等模型 - 平衡性能和成本"
+                "api_type": "openai"
             },
             {
-                "model": "Qwen/Qwen2.5-14B-Instruct",
+                "model": "Qwen/Qwen3-235B-A22B",
                 "api_key": "",
                 "base_url": "https://api.siliconflow.cn/v1",
-                "api_type": "openai",
-                "description": "次弱模型 - 用于辅助任务"
+                "api_type": "openai"
             }
         ]
         
-        # 添加配置说明注释
-        config_with_comments = {
-            "_comment": {
-                "usage_guide": "API配置使用指南",
-                "model_selection": {
-                    "api_1": "最强模型 - 用于复杂推理和重要对话",
-                    "api_2": "轻量模型 - 用于简单任务以节省成本", 
-                    "api_3": "中等模型 - 平衡性能和成本",
-                    "api_4": "次弱模型 - 用于辅助任务"
-                },
-                "recommendations": [
-                    "不建议全部使用参数量大的模型，会增加不必要的成本",
-                    "不建议使用不支持非推理模式的模型",
-                    "本项目对Qwen3等支持推理/非推理模式的API进行了特殊配置",
-                    "使用推理模式并不能增强本项目智能体的实际表现",
-                    "目前只支持OpenAI协议的API"
-                ],
-                "setup_instructions": [
-                    "1. 请在每个配置项的api_key字段填入你的实际API密钥",
-                    "2. 如果使用其他API提供商，请修改base_url字段",
-                    "3. 配置完成后重启应用即可生效"
-                ]
-            },
-            "configs": default_config
-        }
-        
         try:
             with open(self.llm_config_file, 'w', encoding='utf-8') as f:
-                json.dump(config_with_comments, f, indent=4, ensure_ascii=False)
+                json.dump(default_config, f, indent=4, ensure_ascii=False)
             print(f"✅ 已创建默认LLM配置文件: {self.llm_config_file}")
             print(f"📝 请编辑配置文件并填入你的API密钥")
         except Exception as e:
@@ -167,13 +136,7 @@ AGENT_DESCRIPTION="你叫小梦，是梦醒创造出来的ai智能体，你拥�
         """获取LLM配置列表"""
         try:
             with open(self.llm_config_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                
-            # 兼容新旧格式
-            if isinstance(data, dict) and "configs" in data:
-                configs_data = data["configs"]
-            else:
-                configs_data = data
+                configs_data = json.load(f)
                 
             configs = []
             for config_data in configs_data:
@@ -187,26 +150,11 @@ AGENT_DESCRIPTION="你叫小梦，是梦醒创造出来的ai智能体，你拥�
     def save_llm_configs(self, configs: List[LLMConfig]) -> bool:
         """保存LLM配置列表"""
         try:
-            # 读取现有文件以保留注释
-            existing_data = {}
-            if self.llm_config_file.exists():
-                with open(self.llm_config_file, 'r', encoding='utf-8') as f:
-                    existing_data = json.load(f)
-            
             # 转换配置为字典
             configs_data = [config.dict() for config in configs]
             
-            # 保持注释结构
-            if "_comment" in existing_data:
-                save_data = {
-                    "_comment": existing_data["_comment"],
-                    "configs": configs_data
-                }
-            else:
-                save_data = configs_data
-            
             with open(self.llm_config_file, 'w', encoding='utf-8') as f:
-                json.dump(save_data, f, indent=4, ensure_ascii=False)
+                json.dump(configs_data, f, indent=4, ensure_ascii=False)
             return True
         except Exception as e:
             print(f"❌ 保存LLM配置失败: {e}")
