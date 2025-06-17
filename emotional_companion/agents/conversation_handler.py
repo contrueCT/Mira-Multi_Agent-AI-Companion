@@ -6,6 +6,7 @@
 import json
 import time
 import asyncio
+import os
 from datetime import datetime
 from autogen_agentchat.messages import TextMessage
 from autogen_core import CancellationToken
@@ -13,10 +14,16 @@ from .agent_system import EmotionalAgentSystem
 
 
 class ConversationHandler:
-    """对话处理器 - 封装对话流程逻辑"""
-    
     def __init__(self, config_path="configs/OAI_CONFIG_LIST.json"):
         """初始化对话处理器"""
+        # 确保配置文件路径是绝对路径
+        if not os.path.isabs(config_path):
+            if os.getenv('DOCKER_ENV'):
+                project_root = '/app'
+            else:
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            config_path = os.path.join(project_root, config_path)
+            
         self.agent_system = EmotionalAgentSystem(config_path)
         self.is_first_conversation = True  # 跟踪是否是应用启动后的首次对话
         self.last_agent_response = None    # 保存上一次智能体的回复

@@ -1,3 +1,46 @@
+mira-desktop/
+node_modules/
+.git/
+.vscode/
+__pycache__/
+*.pyc
+.env
+venv/
+memory_db/
+logs/
+tests/
+.github/
+
+
+# 忽略配置文件和密钥
+user_config.json
+OAI_CONFIG_LIST.json
+
+# 脚本
+scripts/
+
+# 忽略本地开发环境的配置文件
+configs/OAI_CONFIG_LIST.json
+
+.env.example
+OAI_CONFIG_LIST.example.json
+
+# 文档
+INSTALL.md
+LICENSE
+README.md
+
+# 测试文件
+sql_test.py
+test_memory_system.py
+test_visual_effect_modification.py
+
+
+
+
+
+
+#gitignore
 # Python
 __pycache__/
 *.py[cod]
@@ -62,6 +105,3 @@ CHAT_HEADER_THEME_IMPROVEMENT.md
 mira-desktop/web/theme-test.html
 configs/backup_20250615_173124/OAI_CONFIG_LIST.json
 CONFIG_MANAGEMENT_GUIDE.md
-miramate-backend-1.0.0.tar
-miramate-backend-1.0.0.zip
-configs/user_config.json

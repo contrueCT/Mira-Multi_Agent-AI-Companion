@@ -13,7 +13,14 @@ from typing import Dict, List, Optional
 from contextlib import asynccontextmanager
 
 # 添加项目根目录到Python路径
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Docker容器化路径修改
+def get_project_root():
+    """获取项目根目录，支持容器环境"""
+    if os.getenv('DOCKER_ENV'):
+        return '/app'
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+project_root = get_project_root()
 sys.path.insert(0, project_root)
 
 from autogen_core import try_get_known_serializers_for_type
@@ -39,13 +46,18 @@ class WebAPIServer:
         self.conversation_handler: Optional[ConversationHandler] = None
         self.start_time = time.time()
         self.chat_history: List[ChatHistoryItem] = []
-        self.max_history_size = 1000  # 最大历史记录数量
-        self.config_manager = ConfigManager()  # 新增配置管理器
+        self.max_history_size = 1000
+        # 传递项目根目录给配置管理器
+        self.config_manager = ConfigManager(project_root)
         
     async def initialize(self):
         """初始化ConversationHandler"""
         try:
-            config_path = os.path.join(project_root, "configs", "OAI_CONFIG_LIST.json")
+            # 使用环境变量或默认路径
+            config_path = os.path.join(
+                os.getenv('CONFIG_DIR', os.path.join(project_root, "configs")), 
+                "OAI_CONFIG_LIST.json"
+            )
             self.conversation_handler = ConversationHandler(config_path)
             
             # 启动后台任务

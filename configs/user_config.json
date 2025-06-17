@@ -1,0 +1,10 @@
+{
+    "preferences": {
+        "theme": "light",
+        "language": "zh-CN",
+        "chat_history_limit": 1000,
+        "auto_save": true
+    },
+    "created_at": "2025-06-16T20:18:19.921525",
+    "version": "1.0.0"
+}

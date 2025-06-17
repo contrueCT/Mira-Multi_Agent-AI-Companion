@@ -24,28 +24,39 @@ class EmotionalAgentSystem:
         # 加载环境变量
         load_dotenv()
 
-        # 获取项目根目录
-        project_root = Path(__file__).parent.parent.parent
+        # 获取项目根目录 - Docker环境适配
+        if os.getenv('DOCKER_ENV'):
+            project_root = Path('/app')
+        else:
+            project_root = Path(__file__).parent.parent.parent
         
-        # 从环境变量获取配置
-        self.db_dir = os.getenv('CHROMA_DB_DIR', './memory_db')
+        # 从环境变量获取配置，支持容器环境
+        default_db_dir = '/app/memory_db' if os.getenv('DOCKER_ENV') else './memory_db'
+        self.db_dir = os.getenv('CHROMA_DB_DIR', os.getenv('MEMORY_DB_DIR', default_db_dir))
         self.user_name = os.getenv('USER_NAME', '用户')
         self.agent_name = os.getenv('AGENT_NAME', '小梦')
         self.agent_settings = os.getenv('AGENT_DESCRIPTION', 'default')
 
+        # 处理数据库目录路径
         if not os.path.isabs(self.db_dir):
             self.db_dir = str(project_root / self.db_dir.lstrip('./'))
-        else:
-            self.db_dir = self.db_dir
+        
+        # 确保数据库目录存在
+        os.makedirs(self.db_dir, exist_ok=True)
         
         # 确认配置文件路径
+        if not os.path.isabs(config_path):
+            config_path = str(project_root / config_path)
+            
         if not os.path.exists(config_path):
             raise FileNotFoundError(f"找不到配置文件: {config_path}")
-          # 初始化记忆系统，使用环境变量中的数据库目录
+            
+        # 初始化记忆系统，使用环境变量中的数据库目录
         self.memory_system = EmotionalMemorySystem(persist_directory=self.db_dir)
         
-        # 初始化轻量级日志记录器
-        self.logger = SimpleLogger()
+        # 初始化轻量级日志记录器 - 使用环境变量配置
+        log_dir = os.getenv('LOGS_DIR', '/app/logs' if os.getenv('DOCKER_ENV') else 'logs')
+        self.logger = SimpleLogger(log_dir=log_dir)
         
         # 初始化视觉效果指令队列
         self.command_queue = []

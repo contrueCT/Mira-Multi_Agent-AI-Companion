@@ -9,10 +9,13 @@ import pandas as pd
 from typing import List, Dict
 import sys
 
-# 添加项目根目录到系统路径，以便导入项目模块
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
+# 添加项目根目录到系统路径，支持容器环境
+if os.getenv('DOCKER_ENV'):
+    sys.path.append('/app')
+else:
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+from emotional_companion.memory.emotional_memory import EmotionalMemorySystem
 
 class MemoryViewer:
     """
@@ -27,6 +30,15 @@ class MemoryViewer:
             memory_system: 已存在的EmotionalMemorySystem实例，如果为None则创建新实例
             persist_directory: 向量数据库的存储目录
         """
+        # 处理持久化目录路径，支持容器环境
+        if not os.path.isabs(persist_directory):
+            if os.getenv('DOCKER_ENV'):
+                persist_directory = f"/app/{persist_directory}"
+            else:
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(current_dir)
+                persist_directory = os.path.join(project_root, persist_directory)
+                
         self.memory_system = memory_system or EmotionalMemorySystem(persist_directory)
     
     def get_conversation_history(self, 

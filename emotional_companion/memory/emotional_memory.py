@@ -7,6 +7,17 @@ from chromadb.utils import embedding_functions
 
 class EmotionalMemorySystem:
     def __init__(self, persist_directory="memory_db"):
+        # 处理相对路径，支持容器环境
+        if not os.path.isabs(persist_directory):
+            if os.getenv('DOCKER_ENV'):
+                # Docker环境中使用绝对路径
+                persist_directory = f"/app/{persist_directory}"
+            else:
+                # 本地环境中转换为绝对路径
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(os.path.dirname(current_dir))
+                persist_directory = os.path.join(project_root, persist_directory)
+        
         # 创建持久化目录
         os.makedirs(persist_directory, exist_ok=True)
         
