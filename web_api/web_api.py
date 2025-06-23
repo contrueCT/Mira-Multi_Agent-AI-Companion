@@ -7,7 +7,6 @@ import os
 import sys
 import time
 import uuid
-import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from contextlib import asynccontextmanager
@@ -24,13 +23,16 @@ project_root = get_project_root()
 sys.path.insert(0, project_root)
 
 from autogen_core import try_get_known_serializers_for_type
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.encoders import jsonable_encoder
+import logging
 
 from emotional_companion.agents.conversation_handler import ConversationHandler
 from web_api.config_manager import ConfigManager
+from web_api.websocket_handler import ws_manager, proactive_service, start_proactive_service
 from web_api.models import (
     ChatRequest, ChatResponse, EmotionalState, 
     ChatHistory, ChatHistoryItem, HealthStatus, ErrorResponse,
@@ -47,11 +49,10 @@ class WebAPIServer:
         self.start_time = time.time()
         self.chat_history: List[ChatHistoryItem] = []
         self.max_history_size = 1000
-        # 传递项目根目录给配置管理器
-        self.config_manager = ConfigManager(project_root)
+        # 传递项目根目录给配置管理器        self.config_manager = ConfigManager(project_root)
         
     async def initialize(self):
-        """初始化ConversationHandler"""
+        """初始化ConversationHandler和WebSocket服务"""
         try:
             # 使用环境变量或默认路径
             config_path = os.path.join(
@@ -73,8 +74,12 @@ class WebAPIServer:
                 print(f"💡 可通过Web界面配置API密钥后重启服务")
                 self.conversation_handler = None
             
+            # 启动WebSocket主动消息服务
+            await start_proactive_service()
+            print(f"✅ WebSocket主动消息服务启动成功")
+            
         except Exception as e:
-            print(f"⚠️  ConversationHandler初始化失败: {e}")
+            print(f"⚠️  服务初始化失败: {e}")
             print(f"💡 Web服务器仍将启动，可通过界面配置后重启")
             self.conversation_handler = None
     
@@ -90,8 +95,7 @@ class WebAPIServer:
                 
             if not configs:
                 return False
-                
-            # 检查是否至少有一个有效的API密钥
+                  # 检查是否至少有一个有效的API密钥
             for config in configs:
                 if config.get('api_key') and config.get('api_key').strip():
                     return True
@@ -104,6 +108,11 @@ class WebAPIServer:
         if self.conversation_handler:
             self.conversation_handler.stop_background_tasks()
             print("✅ 后台任务已停止")
+        
+        # 停止WebSocket主动消息服务
+        from web_api.websocket_handler import proactive_service
+        await proactive_service.stop()
+        print("✅ WebSocket服务已停止")
 
 
 # 创建全局服务器实例
@@ -143,17 +152,174 @@ if os.path.exists(web_static_path):
     app.mount("/static", StaticFiles(directory=web_static_path), name="static")
 
 
+# ===== WebSocket端点 =====
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket连接端点"""
+    # 建立连接
+    if not await ws_manager.connect(websocket):
+        return
+    
+    try:
+        while True:
+            # 接收客户端消息
+            data = await websocket.receive_text()
+            message = ws_manager.validate_message(data)
+            
+            if not message:
+                await ws_manager.send_message(websocket, {
+                    "type": "error",
+                    "data": "消息格式错误",
+                    "timestamp": time.time()
+                })
+                continue
+            
+            # 处理不同类型的消息
+            await handle_websocket_message(websocket, message)
+                
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+        logging.info("WebSocket客户端主动断开连接")
+    except Exception as e:
+        logging.error(f"WebSocket处理异常: {e}")
+        ws_manager.disconnect(websocket)
+
+
+async def handle_websocket_message(websocket: WebSocket, message: dict):
+    """处理WebSocket消息"""
+    message_type = message.get("type")
+    message_data = message.get("data", "")
+    
+    try:
+        if message_type == "chat":
+            # 处理聊天消息
+            await handle_chat_message(websocket, message_data)
+            
+        elif message_type == "ping":
+            # 处理心跳检测
+            await ws_manager.send_message(websocket, {
+                "type": "pong",
+                "timestamp": time.time()
+            })
+            
+        elif message_type == "get_emotional_state":
+            # 获取情感状态
+            await handle_emotional_state_request(websocket)
+            
+        else:
+            # 未知消息类型
+            await ws_manager.send_message(websocket, {
+                "type": "error",
+                "data": f"未知的消息类型: {message_type}",
+                "timestamp": time.time()
+            })
+            
+    except Exception as e:
+        logging.error(f"处理消息失败 [{message_type}]: {e}")
+        await ws_manager.send_message(websocket, {
+            "type": "error",
+            "data": "处理消息时发生错误",
+            "timestamp": time.time()
+        })
+
+
+async def handle_chat_message(websocket: WebSocket, user_message: str):
+    """处理聊天消息"""
+    if not user_message.strip():
+        await ws_manager.send_message(websocket, {
+            "type": "chat_response",
+            "data": "消息不能为空哦～",
+            "timestamp": time.time()
+        })
+        return
+    
+    # 更新最后消息时间（用于主动消息服务）
+    proactive_service.update_last_message_time()
+    
+    if server.conversation_handler:
+        try:
+            # 调用AI对话处理器
+            response = await server.conversation_handler.get_response(user_message)
+            
+            # 发送AI回复
+            await ws_manager.send_message(websocket, {
+                "type": "chat_response",
+                "data": response,
+                "timestamp": time.time()
+            })
+            
+            # 记录到聊天历史
+            history_item = ChatHistoryItem(
+                id=str(uuid.uuid4()),
+                user_message=user_message,
+                ai_response=response,
+                timestamp=datetime.now()
+            )
+            
+            server.chat_history.append(history_item)
+            
+            # 限制历史记录数量
+            if len(server.chat_history) > server.max_history_size:
+                server.chat_history = server.chat_history[-server.max_history_size:]
+                
+        except Exception as e:
+            logging.error(f"AI对话处理失败: {e}")
+            await ws_manager.send_message(websocket, {
+                "type": "chat_response",
+                "data": "抱歉，我刚才走神了...能再说一遍吗？ 😅",
+                "timestamp": time.time()
+            })
+    else:
+        # AI系统未初始化时的回复
+        await ws_manager.send_message(websocket, {
+            "type": "chat_response",
+            "data": "系统正在初始化中，请稍候再试。或者你可以通过设置页面配置API密钥后重启服务～",
+            "timestamp": time.time()
+        })
+
+
+async def handle_emotional_state_request(websocket: WebSocket):
+    """处理获取情感状态请求"""
+    if server.conversation_handler:
+        try:
+            emotional_state = server.conversation_handler.get_current_emotional_state()
+            await ws_manager.send_message(websocket, {
+                "type": "emotional_state",
+                "data": emotional_state,
+                "timestamp": time.time()
+            })
+        except Exception as e:
+            logging.error(f"获取情感状态失败: {e}")
+            await ws_manager.send_message(websocket, {
+                "type": "error",
+                "data": "获取情感状态失败",
+                "timestamp": time.time()
+            })
+    else:
+        await ws_manager.send_message(websocket, {
+            "type": "emotional_state",
+            "data": {
+                "current_emotion": "neutral",
+                "emotion_intensity": 0.5,
+                "relationship_level": 1
+            },
+            "timestamp": time.time()
+        })
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """全局异常处理器"""
+    error_response = ErrorResponse(
+        error="Internal Server Error",
+        message=str(exc),
+        timestamp=datetime.now(),
+        status_code=500
+    )
     return JSONResponse(
         status_code=500,
-        content=ErrorResponse(
-            error="Internal Server Error",
-            message=str(exc),
-            timestamp=datetime.now(),
-            status_code=500
-        ).dict()
+        content=jsonable_encoder(error_response)
     )
 
 
@@ -230,18 +396,19 @@ async def chat_endpoint(request: ChatRequest):
         )
         
         server.chat_history.append(chat_item)
-        
-        # 限制历史记录大小
+          # 限制历史记录大小
         if len(server.chat_history) > server.max_history_size:
             server.chat_history = server.chat_history[-server.max_history_size:]
-        
-        return ChatResponse(
+
+        chat_response = ChatResponse(
             response=ai_response,
             timestamp=timestamp,
             emotional_state=emotional_state,
             processing_time=processing_time if request.enable_timing else None,
             commands=commands if commands else None
         )
+        
+        return JSONResponse(content=jsonable_encoder(chat_response))
         
     except Exception as e:
         raise HTTPException(
@@ -325,7 +492,8 @@ async def clear_chat_history():
     """
     try:
         server.chat_history.clear()
-        return {"message": "聊天历史已清空", "timestamp": datetime.now()}
+        response_data = {"message": "聊天历史已清空", "timestamp": datetime.now()}
+        return JSONResponse(content=jsonable_encoder(response_data))
         
     except Exception as e:
         raise HTTPException(
@@ -337,11 +505,10 @@ async def clear_chat_history():
 @app.get("/api/health", response_model=HealthStatus)
 async def health_check():
     """
-    健康检查接口
+    健康检查接口 (包含WebSocket状态)
     """
     uptime = time.time() - server.start_time
-    
-    # 检查API配置状态
+      # 检查API配置状态
     config_path = os.path.join(
         os.getenv('CONFIG_DIR', os.path.join(project_root, "configs")), 
         "OAI_CONFIG_LIST.json"
@@ -352,42 +519,81 @@ async def health_check():
         "conversation_handler": "healthy" if server.conversation_handler else "not_configured",
         "chat_history": "healthy",
         "api_server": "healthy",
-        "api_config": "healthy" if has_valid_keys else "needs_configuration"
+        "api_config": "healthy" if has_valid_keys else "needs_configuration",
+        "websocket_service": "healthy",
+        "websocket_connections": str(ws_manager.get_connection_count()),
+        "proactive_service": "running" if proactive_service.is_running else "stopped"
     }
-    
-    # 如果ConversationHandler未初始化但是服务器运行正常，仍然返回部分可用状态
+      # 如果ConversationHandler未初始化但是服务器运行正常，仍然返回部分可用状态
     overall_status = "healthy" if server.conversation_handler else "partial"
     
-    return HealthStatus(
+    health_status = HealthStatus(
         status=overall_status,
         timestamp=datetime.now(),
         version="1.0.0",
         uptime=uptime,
         services=services
     )
+    
+    # 使用jsonable_encoder确保datetime对象正确序列化
+    return JSONResponse(content=jsonable_encoder(health_status))
 
 
 @app.get("/api/stats")
 async def get_stats():
     """
-    获取系统统计信息
+    获取系统统计信息 (包含WebSocket状态)
     """
     try:
         uptime = time.time() - server.start_time
         
-        return {
+        stats_data = {
             "uptime_seconds": uptime,
             "uptime_formatted": str(timedelta(seconds=int(uptime))),
             "chat_history_count": len(server.chat_history),
             "max_history_size": server.max_history_size,
             "conversation_handler_status": "initialized" if server.conversation_handler else "not_initialized",
+            "websocket_connections": ws_manager.get_connection_count(),
+            "proactive_service_running": proactive_service.is_running,
+            "proactive_last_message": proactive_service.last_message_time.isoformat() if hasattr(proactive_service, 'last_message_time') else None,
             "timestamp": datetime.now()
         }
+        
+        return JSONResponse(content=jsonable_encoder(stats_data))
         
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"获取统计信息时发生错误: {str(e)}"
+        )
+
+
+# 新增WebSocket状态查询接口
+@app.get("/api/websocket/status")
+async def get_websocket_status():
+    """
+    获取WebSocket服务状态详细信息
+    """
+    try:
+        status_data = {
+            "service_running": True,
+            "active_connections": ws_manager.get_connection_count(),
+            "max_connections": ws_manager.max_connections,
+            "proactive_service": {
+                "running": proactive_service.is_running,
+                "check_interval": proactive_service.check_interval,
+                "idle_threshold": proactive_service.idle_threshold,
+                "last_message_time": proactive_service.last_message_time.isoformat(),
+                "total_messages": len(proactive_service.proactive_messages)
+            },
+            "timestamp": datetime.now()
+        }
+        
+        return JSONResponse(content=jsonable_encoder(status_data))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取WebSocket状态失败: {str(e)}"
         )
 
 

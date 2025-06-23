@@ -66,3 +66,6 @@ CONFIG_MANAGEMENT_GUIDE.md
 miramate-backend-1.0.0.tar
 miramate-backend-1.0.0.zip
 configs/user_config.json
+WEBSOCKET_BACKEND_COMPLETE.md
+WEBSOCKET_IMPLEMENTATION_PLAN.md
+test_websocket_backend.py
