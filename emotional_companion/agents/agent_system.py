@@ -212,6 +212,7 @@ class EmotionalAgentSystem:
             - effect_description: 效果描述（如"庆祝"、"爱心"、"温暖"等）
             - reply_content: 你要回复给用户的完整内容，因为当你调用工具的时候无法正常回复内容，所以你需要在调用工具的时候传入你要回复的内容。
             - 工具会执行视觉效果并返回你的回复内容给用户
+            - 应该主动的多多使用视觉效果来增强用户体验
 
             以下是你回答时需要的特点：
             1.所有回应需体现即时情感状态 （如："听到这个消息我也很难过..."）
@@ -219,7 +220,6 @@ class EmotionalAgentSystem:
             3.成长性体现：在长期对话中自然展现认知拓展 （如："上次你说...让我想到..."）
             4.通过情感反馈循环 深化理解（如："我发现你最近更容易为小事开心呢"）
             5.有动态偏好，逐渐形成对特定话题/互动方式的喜好/回避倾向
-            6.一次回复不用太长，一两句话或者几句话都行
             
             /no_think"""
         )
@@ -395,7 +395,7 @@ class EmotionalAgentSystem:
         """创建视觉效果相关工具函数"""
         command_queue = self.command_queue        
         def control_visual_effect(effect_description: str, reply_content: str,
-                                duration: int = None, intensity: float = 0.5, 
+                                duration: int = None, intensity: float = None, 
                                 effect_type: str = "auto") -> str:
             """控制客户端视觉效果并返回回复内容
             
@@ -403,15 +403,22 @@ class EmotionalAgentSystem:
                 effect_description: 效果描述字符串，如"庆祝"、"温暖"、"爱心"、"闪亮"等
                 reply_content: 要回复给用户的内容
                 duration: 持续时间（毫秒），如果不指定则使用默认值
-                intensity: 效果强度 (0.1-1.0)，控制效果的强烈程度
+                intensity: 效果强度 (0.1-1.0)，如果不指定则自动推断
                 effect_type: 效果类型 ("temporary"临时动画, "persistent"持久主题, "auto"自动选择)
-            
             Returns:
                 传入的回复内容
             """
             try:
-                # 限制参数范围
-                intensity = max(0.1, min(1.0, intensity))
+                # 自动推断强度（如果未指定）
+                if intensity is None:
+                    # 从回复内容和效果描述中推断强度
+                    combined_text = f"{effect_description} {reply_content}"
+                    from emotional_companion.effects.visual_effects_controller import visual_effects_controller
+                    intensity = visual_effects_controller._estimate_intensity_from_text(combined_text.lower())
+                else:
+                    # 限制参数范围
+                    intensity = max(0.1, min(1.0, intensity))
+                
                 if duration is not None:
                     duration = max(500, min(10000, duration))  # 限制在0.5-10秒
                 
@@ -428,16 +435,28 @@ class EmotionalAgentSystem:
                     
                     # 添加到指令队列
                     command_queue.append(command)
+                      # 调试信息
+                    if hasattr(self, 'logger'):
+                        self.logger.step("visual_effect", f"视觉效果已触发: {command.get('effect_name', '未知')} 强度:{intensity:.2f}")
                     
-                    # 返回回复内容而不是确认消息
-                    return f"{reply_content}\n (视觉效果已应用: {effect_description}, 强度: {intensity:.1f})"
-                else:
-                    # 即使效果识别失败，也返回回复内容
-                    return f"{reply_content}\n (视觉效果识别失败，请检查描述)"
+                    # 只返回纯净的回复内容，不添加视觉效果提示
+                    return reply_content
+                else:                    # 效果识别失败，记录调试信息
+                    if hasattr(self, 'logger'):
+                        self.logger.step("visual_effect_failed", f"视觉效果识别失败: '{effect_description}' - 请检查描述是否合适")
+                    print(f"[警告] 视觉效果识别失败: '{effect_description}'")
+                      # 仍返回纯净的回复内容
+                    return reply_content
                     
             except Exception as e:
-                # 发生错误时也返回回复内容
-                return f"{reply_content}\n (视觉效果处理失败: {str(e)})"
+                # 发生错误时记录日志
+                error_msg = f"视觉效果处理出错: {str(e)}"
+                print(f"[错误] {error_msg}")
+                if hasattr(self, 'logger'):
+                    self.logger.step("error", error_msg)
+                
+                # 发生错误时也返回纯净的回复内容
+                return reply_content
         
         # 返回工具函数列表
         return [control_visual_effect]

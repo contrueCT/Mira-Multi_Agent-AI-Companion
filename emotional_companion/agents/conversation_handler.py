@@ -50,8 +50,7 @@ class ConversationHandler:
             
             # 创建cancellation token
             cancellation_token = CancellationToken()
-            
-            # 执行完整的对话流程
+              # 执行完整的对话流程
             response = await self._process_conversation_flow(
                 user_message, 
                 cancellation_token, 
@@ -66,9 +65,10 @@ class ConversationHandler:
             return response
             
         except Exception as e:
-            error_msg = f"抱歉，我遇到了一些问题：{str(e)}"
-            print(f"[错误] {error_msg}")            
-            return error_msg
+            error_msg = f"系统处理异常: {str(e)}"
+            print(f"[错误] {error_msg}")
+            # 返回用户友好的错误信息，而不是技术细节
+            return "抱歉，我现在遇到了一些技术问题，请稍后再试。"
     
     async def get_response_with_commands(self, user_message: str, enable_timing=False) -> dict:
         """
@@ -102,8 +102,7 @@ class ConversationHandler:
             
             # 获取视觉效果指令
             commands = self.agent_system.get_pending_commands()
-            
-            # 显示总时间（可选）
+              # 显示总时间（可选）
             if enable_timing:
                 total_time = time.perf_counter() - total_start
                 print(f"[完成] 总处理时间: {total_time:.2f}秒")
@@ -117,10 +116,10 @@ class ConversationHandler:
             }
             
         except Exception as e:
-            error_msg = f"抱歉，我遇到了一些问题：{str(e)}"
+            error_msg = f"系统处理异常: {str(e)}"
             print(f"[错误] {error_msg}")            
             return {
-                "response": error_msg,
+                "response": "抱歉，我现在遇到了一些技术问题，请稍后再试。",
                 "commands": [],
                 "timestamp": datetime.now().isoformat()
             }
@@ -164,19 +163,46 @@ class ConversationHandler:
         if enable_timing:
             companion_time = time.perf_counter() - companion_start
             print(f"  对话生成: {companion_time:.2f}秒")
-        
-        # 记录智能体回答
+          # 记录智能体回答
         self.agent_system.logger.step("response", response)
-          # 4. 异步保存记忆和更新状态（不等待完成）
-        asyncio.create_task(self._save_and_update_async(
-            user_input, response, emotion_data, inner_thoughts, cancellation_token
-        ))
+        
+        # 4. 判断是否是错误回复，如果是则不保存记忆
+        is_error_response = self._is_error_response(response)
+        
+        if not is_error_response:
+            # 4. 异步保存记忆和更新状态（不等待完成）
+            asyncio.create_task(self._save_and_update_async(
+                user_input, response, emotion_data, inner_thoughts, cancellation_token
+            ))
+        else:
+            print(f"[警告] 检测到错误回复，跳过记忆保存: {response[:50]}...")
         
         # 5. 更新对话状态
         self.last_agent_response = response
         self.is_first_conversation = False
         
         return response
+    
+    def _is_error_response(self, response: str) -> bool:
+        """判断回复是否是错误信息"""
+        error_indicators = [
+            "抱歉，我现在遇到了一些技术问题",
+            "系统处理异常",
+            "抱歉，我遇到了一些问题",
+            "技术问题",
+            "处理失败",
+            "无法处理",
+            "服务异常",
+            "Traceback",
+            "Error:",
+            "Exception:"
+        ]
+        
+        response_lower = response.lower()
+        for indicator in error_indicators:
+            if indicator.lower() in response_lower:
+                return True
+        return False
     
     async def _analyze_emotion(self, user_input: str, cancellation_token) -> str:
         """分析用户情绪"""
@@ -289,7 +315,8 @@ class ConversationHandler:
                 当前情绪: {self.agent_system.memory_system.emotional_state['current_emotion']}
                 当前关系: {self.agent_system.memory_system.emotional_state['relationship_level']}/10
                 
-                如果需要记录关系事件或用户偏好，请简要描述事件内容和重要性。""",
+                如果需要记录关系事件或用户偏好，请简要描述事件内容和重要性。
+                如果本次的回复内容是报错信息，就不要记录任何内容。""",
                 source="user"
             )
             
