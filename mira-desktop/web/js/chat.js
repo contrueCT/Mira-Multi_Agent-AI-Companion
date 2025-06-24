@@ -8,11 +8,13 @@ class EmotionalChatApp {
         // 检测运行环境
         this.isElectron = typeof window.electronAPI !== 'undefined'
         this.config = null
-        
-        console.log(`🌐 运行环境: ${this.isElectron ? 'Electron桌面客户端' : '浏览器'}`)
+          console.log(`🌐 运行环境: ${this.isElectron ? 'Electron桌面客户端' : '浏览器'}`)
         
         // 初始化视觉效果处理器
         this.visualEffects = new VisualEffectsProcessor()
+        
+        // 初始化WebSocket客户端
+        this.wsClient = null
         
         this.init()
         this.bindEvents()
@@ -121,10 +123,14 @@ async updateMaximizeButton() {
         this.apiEndpoints = {
             chat: '/api/chat',
             emotionalState: '/api/emotional-state',
-            health: '/api/health'
-        }
+            health: '/api/health'        }
         
         console.log('✨ 小梦客户端初始化完成')
+        
+        // 延迟初始化WebSocket，确保其他组件已准备就绪
+        setTimeout(() => {
+            this.initWebSocket()
+        }, 500)
     }
 
     async updateConfig(key, value) {
@@ -224,12 +230,12 @@ async updateMaximizeButton() {
             this.messageInput.style.height = 'auto';
             this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
         });
-    }
-
-    setupTypingEffect() {
+    }    setupTypingEffect() {
         // 为机器人消息添加打字效果的基础设置
         this.typingSpeed = 30; // 毫秒/字符
-    }    async sendMessage() {
+    }
+
+    async sendMessage() {
         const message = this.messageInput.value.trim();
         if (!message || this.isLoading) return;
 
@@ -246,7 +252,18 @@ async updateMaximizeButton() {
         this.showTypingIndicator();
 
         try {
-            // 调用后端API（暂时模拟）
+            // 优先使用WebSocket发送消息
+            const webSocketSent = this.sendMessageViaWebSocket(message);
+            
+            if (webSocketSent) {
+                console.log('📤 通过WebSocket发送消息:', message);
+                // WebSocket发送成功，等待服务器回复
+                // 回复将通过WebSocket消息处理器处理
+                return;
+            }
+            
+            // WebSocket不可用，降级到HTTP API
+            console.log('📤 通过HTTP API发送消息:', message);
             const response = await this.callChatAPI(message);
             
             // 隐藏"正在输入"状态
@@ -257,6 +274,11 @@ async updateMaximizeButton() {
             
             // 更新情感状态显示
             this.updateEmotionalStatus(response.emotionalState);
+            
+            // 处理视觉效果指令
+            if (response.commands && response.commands.length > 0) {
+                await this.processVisualCommands(response.commands);
+            }
             
         } catch (error) {
             console.error('发送消息失败:', error);
@@ -554,8 +576,7 @@ async updateMaximizeButton() {
         }
     }
 
-    async initializeAPI() {
-        // 检查API健康状态
+    async initializeAPI() {        // 检查API健康状态
         const isHealthy = await this.checkAPIHealth();
         
         if (isHealthy) {
@@ -564,7 +585,12 @@ async updateMaximizeButton() {
             
             // 显示连接成功提示
             setTimeout(() => {
-                this.showToast('💖 小梦已准备好和您聊天啦～', 'success');
+                const wsStatus = this.wsClient ? this.wsClient.getConnectionState() : 'disconnected';
+                if (wsStatus === 'connected') {
+                    this.showToast('💖 小梦已准备好和您聊天啦～ (WebSocket)', 'success');
+                } else {
+                    this.showToast('💖 小梦已准备好和您聊天啦～ (HTTP)', 'success');
+                }
             }, 1500);
         } else {
             // 显示离线模式提示
@@ -634,8 +660,7 @@ async updateMaximizeButton() {
 
     /**
      * 处理视觉效果指令队列
-     */
-    async processVisualCommands(commands) {
+     */    async processVisualCommands(commands) {
         if (!commands || commands.length === 0) return;
 
         try {
@@ -655,11 +680,13 @@ async updateMaximizeButton() {
             if (persistentCommands.length > 0) {
                 const lastPersistentCommand = persistentCommands[persistentCommands.length - 1];
                 await this.visualEffects.executeVisualCommand(lastPersistentCommand);
+                this.showVisualEffectNotification(lastPersistentCommand);
             }
 
             // 然后依次执行临时效果
             for (const command of temporaryCommands) {
                 await this.visualEffects.executeVisualCommand(command);
+                this.showVisualEffectNotification(command);
                 // 临时效果之间稍微间隔
                 if (temporaryCommands.length > 1) {
                     await this.sleep(200);
@@ -670,6 +697,93 @@ async updateMaximizeButton() {
             console.error('处理视觉效果指令时发生错误:', error);
             this.showToast('视觉效果执行失败', 'error');
         }
+    }
+
+    /**
+     * 显示视觉效果触发通知
+     */
+    showVisualEffectNotification(command) {
+        if (!command || !command.effect_description) return;
+        
+        const { effect_description, intensity, effect_type } = command;
+        const intensityText = intensity ? `${(intensity * 100).toFixed(0)}%` : '50%';
+        const typeText = effect_type === 'persistent' ? '主题' : '动画';
+        
+        // 创建更简洁的提示消息
+        const message = `✨ ${effect_description} (${typeText}, 强度: ${intensityText})`;
+        
+        // 显示为轻量级提示，不打断用户
+        this.showSubtleNotification(message);
+    }    /**
+     * 显示轻量级通知（比toast更不显眼）
+     */
+    showSubtleNotification(message) {
+        // 检查是否已有相同类型的通知，避免重复
+        const existingNotifications = document.querySelectorAll('.visual-effect-notification');
+        
+        // 如果已有超过3个通知，移除最旧的
+        if (existingNotifications.length >= 3) {
+            const oldestNotification = existingNotifications[0];
+            if (oldestNotification.parentNode) {
+                oldestNotification.style.opacity = '0';
+                oldestNotification.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    if (oldestNotification.parentNode) {
+                        document.body.removeChild(oldestNotification);
+                    }
+                }, 300);
+            }
+        }
+        
+        // 创建一个轻量级的通知元素
+        const notification = document.createElement('div');
+        notification.className = 'visual-effect-notification';
+        notification.textContent = message;
+        
+        // 计算当前通知的位置偏移
+        const currentNotifications = document.querySelectorAll('.visual-effect-notification');
+        const topOffset = 80 + (currentNotifications.length * 45);
+        
+        // 添加样式
+        notification.style.cssText = `
+            position: fixed;
+            top: ${topOffset}px;
+            right: 20px;
+            background: rgba(74, 144, 226, 0.1);
+            color: #4a90e2;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(74, 144, 226, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            max-width: 250px;
+            word-wrap: break-word;
+            transform: translateY(-10px);
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // 淡入动画
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // 3秒后淡出并移除
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
     }
 
     /**
@@ -712,6 +826,148 @@ async updateMaximizeButton() {
             this.visualEffects.testEffect(effectName, intensity);
             console.log(`🧪 测试视觉效果: ${effectName}, 强度: ${intensity}`);
         }
+    }
+
+    // ==================== WebSocket相关方法 ====================
+
+    /**
+     * 初始化WebSocket连接
+     */
+    initWebSocket() {
+        try {
+            // 创建WebSocket客户端实例
+            this.wsClient = new SimpleWebSocketClient()
+            
+            // 设置消息处理器
+            this.wsClient.onMessage = (data) => {
+                this.handleWebSocketMessage(data)
+            }
+            
+            // 设置连接状态变化回调
+            this.wsClient.onConnectionChange = (newState, oldState) => {
+                this.handleConnectionStateChange(newState, oldState)
+            }
+            
+            console.log('✅ WebSocket客户端初始化成功')
+            
+        } catch (error) {
+            console.error('❌ WebSocket客户端初始化失败:', error)
+            this.showToast('WebSocket初始化失败，将使用HTTP模式', 'warning')
+        }
+    }
+
+    /**
+     * 处理WebSocket消息
+     */
+    handleWebSocketMessage(data) {
+        const { type } = data
+        
+        switch (type) {
+            case 'chat_response':
+                // 处理聊天回复
+                this.handleWebSocketChatResponse(data)
+                break
+                
+            case 'proactive_chat':
+                // 处理主动消息
+                this.handleProactiveMessage(data)
+                break
+                
+            default:
+                console.log('收到WebSocket消息:', data)
+        }
+    }
+
+    /**
+     * 处理WebSocket聊天回复
+     */
+    async handleWebSocketChatResponse(data) {
+        const { response, emotional_state, commands } = data
+        
+        // 隐藏"正在输入"状态
+        this.hideTypingIndicator()
+        
+        // 添加AI回复到界面
+        await this.addBotMessage(response, emotional_state)
+        
+        // 更新情感状态
+        if (emotional_state) {
+            this.updateEmotionalStatus({
+                emotion: emotional_state.current_emotion,
+                intensity: emotional_state.emotion_intensity,
+                relationshipLevel: emotional_state.relationship_level
+            })
+        }
+        
+        // 处理视觉效果指令
+        if (commands && commands.length > 0) {
+            await this.processVisualCommands(commands)
+        }
+    }
+
+    /**
+     * 处理主动消息
+     */
+    async handleProactiveMessage(data) {
+        const { message, emotional_state } = data
+        
+        console.log('📢 收到主动消息:', message)
+        
+        // 添加主动消息到界面
+        await this.addBotMessage(message, emotional_state)
+        
+        // 更新情感状态
+        if (emotional_state) {
+            this.updateEmotionalStatus({
+                emotion: emotional_state.current_emotion,
+                intensity: emotional_state.emotion_intensity,
+                relationshipLevel: emotional_state.relationship_level
+            })
+        }
+        
+        // 显示提示
+        this.showToast('收到小梦的主动消息 💕', 'info')
+    }
+
+    /**
+     * 处理连接状态变化
+     */
+    handleConnectionStateChange(newState, oldState) {
+        console.log(`🔄 连接状态变化: ${oldState} -> ${newState}`)
+        
+        switch (newState) {
+            case 'connected':
+                this.showToast('WebSocket连接成功', 'success')
+                break
+            case 'disconnected':
+                if (oldState === 'connected') {
+                    this.showToast('连接断开，已切换到HTTP模式', 'warning')
+                }
+                break
+            case 'connecting':
+                // 不显示连接中的提示，避免过于频繁
+                break
+        }
+    }
+
+    /**
+     * 通过WebSocket发送聊天消息
+     */
+    sendMessageViaWebSocket(message) {
+        if (this.wsClient && this.wsClient.isConnected()) {
+            return this.wsClient.sendChatMessage(message)
+        }
+        return false
+    }
+
+    /**
+     * 获取WebSocket连接状态
+     */
+    getWebSocketStatus() {
+        if (this.wsClient) {
+            return this.wsClient.getStats()
+        }
+        return null
     }
 }
 

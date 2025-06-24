@@ -302,6 +302,61 @@ body {
     font-weight: 400;
 }
 
+/* ===== WebSocket连接状态 ===== */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 16px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.connection-status .status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.connection-status .status-indicator.connected {
+    background: #4CAF50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+    animation: connected-pulse 2s infinite;
+}
+
+.connection-status .status-indicator.connecting {
+    background: #FF9800;
+    animation: connecting-blink 1s infinite;
+}
+
+.connection-status .status-indicator.disconnected {
+    background: #f44336;
+}
+
+.status-text {
+    color: white;
+    opacity: 0.95;
+}
+
+@keyframes connected-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes connecting-blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
 .header-actions {
     display: flex;
     gap: 8px;
@@ -949,4 +1004,42 @@ body {
         font-size: 14px;
         border-radius: 12px;
     }
+}
+
+/* ===== 视觉效果通知样式 ===== */
+.visual-effect-notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(74, 144, 226, 0.1);
+    color: #4a90e2;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    max-width: 250px;
+    word-wrap: break-word;
+    transform: translateY(-10px);
+}
+
+.visual-effect-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* 暗色主题下的视觉效果通知 */
+.app-container.night-theme .visual-effect-notification {
+    background: rgba(138, 43, 226, 0.15);
+    color: #bb86fc;
+    border-color: rgba(138, 43, 226, 0.4);
+}
+
+/* 多个通知的堆叠效果 */
+.visual-effect-notification:nth-child(n+2) {
+    top: calc(80px + 40px * var(--notification-index, 0));
 }

@@ -49,11 +49,15 @@
                         <img src="../assets/icon.png" alt="小梦头像" class="avatar-img">
                     </div>
                     <div class="status-indicator online"></div>
-                </div>
-                <div class="header-info">
+                </div>                <div class="header-info">
                     <h1 class="chat-title">小梦</h1>
                     <p class="chat-subtitle" id="emotionalStatus">心情愉悦 | 亲密度 8/10</p>
-                </div>                <div class="header-actions">
+                </div>
+                <!-- 连接状态显示 -->
+                <div class="connection-status" id="connectionStatus">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <span class="status-text" id="statusText">连接中...</span>
+                </div><div class="header-actions">
                     <button class="header-btn" id="effectsToggleBtn" title="视觉效果开关">
                         <i class="fas fa-magic"></i>
                     </button>
@@ -149,10 +153,9 @@
     <!-- 错误提示 -->
     <div class="error-toast" id="errorToast">
         <i class="fas fa-exclamation-triangle"></i>        <span class="error-message">发生了一些小问题，请稍后再试～</span>
-    </div>
-
-    <script src="js/performance-monitor.js"></script>
+    </div>    <script src="js/performance-monitor.js"></script>
     <script src="js/visual-effects.js"></script>
+    <script src="js/websocket-simple.js"></script>
     <script src="js/chat.js"></script>
 </body>
 </html>
