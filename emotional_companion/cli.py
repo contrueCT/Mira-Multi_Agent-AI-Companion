@@ -3,6 +3,27 @@ import os
 import sys
 import pyfiglet
 import asyncio
+
+# 尽早禁用遥测功能
+def early_disable_telemetry():
+    """在程序最早期禁用遥测功能"""
+    os.environ['POSTHOG_DISABLED'] = 'true'
+    os.environ['DO_NOT_TRACK'] = '1'
+    os.environ['TELEMETRY_DISABLED'] = 'true'
+    os.environ['DISABLE_TELEMETRY'] = '1'
+    os.environ['AUTOGEN_TELEMETRY_OPT_OUT'] = '1'
+    
+    try:
+        from emotional_companion.utils.disable_telemetry import disable_all_telemetry, disable_urllib3_warnings, suppress_ssl_warnings
+        disable_all_telemetry()
+        disable_urllib3_warnings()
+        suppress_ssl_warnings()
+    except Exception as e:
+        print(f"⚠️ 禁用遥测时出现问题: {e}")
+
+# 立即执行遥测禁用
+early_disable_telemetry()
+
 from emotional_companion.agents.conversation_handler import ConversationCLI
 from emotional_companion.utils.time_utils import get_formatted_time
 

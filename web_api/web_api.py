@@ -3,8 +3,22 @@
 使用FastAPI提供RESTful API接口，连接前端Web界面与后端ConversationHandler
 """
 
+# 尽早禁用遥测功能，避免PostHog等服务的SSL错误
 import os
 import sys
+
+# 在导入其他模块之前先禁用遥测
+def early_disable_telemetry():
+    """在程序最早期禁用遥测功能"""
+    os.environ['POSTHOG_DISABLED'] = 'true'
+    os.environ['DO_NOT_TRACK'] = '1'
+    os.environ['TELEMETRY_DISABLED'] = 'true'
+    os.environ['DISABLE_TELEMETRY'] = '1'
+    os.environ['AUTOGEN_TELEMETRY_OPT_OUT'] = '1'
+
+# 立即执行环境变量设置
+early_disable_telemetry()
+
 import time
 import uuid
 from datetime import datetime, timedelta
@@ -45,11 +59,22 @@ class WebAPIServer:
     """Web API 服务器类"""
     
     def __init__(self):
+        # 首先确保遥测完全禁用
+        try:
+            from emotional_companion.utils.disable_telemetry import disable_all_telemetry, disable_urllib3_warnings, suppress_ssl_warnings
+            disable_all_telemetry()
+            disable_urllib3_warnings()
+            suppress_ssl_warnings()
+            print("🛡️ 遥测功能已在WebAPIServer中禁用")
+        except Exception as e:
+            print(f"⚠️ 禁用遥测时出现问题: {e}")
+        
         self.conversation_handler: Optional[ConversationHandler] = None
         self.start_time = time.time()
         self.chat_history: List[ChatHistoryItem] = []
         self.max_history_size = 1000
-        # 传递项目根目录给配置管理器        self.config_manager = ConfigManager(project_root)
+        # 传递项目根目录给配置管理器
+        self.config_manager = ConfigManager(project_root)
         
     async def initialize(self):
         """初始化ConversationHandler和WebSocket服务"""
@@ -229,7 +254,11 @@ async def handle_chat_message(websocket: WebSocket, user_message: str):
     if not user_message.strip():
         await ws_manager.send_message(websocket, {
             "type": "chat_response",
-            "data": "消息不能为空哦～",
+            "data": {
+                "response": "消息不能为空哦～",
+                "emotional_state": None,
+                "commands": []
+            },
             "timestamp": time.time()
         })
         return
@@ -239,13 +268,24 @@ async def handle_chat_message(websocket: WebSocket, user_message: str):
     
     if server.conversation_handler:
         try:
-            # 调用AI对话处理器
-            response = await server.conversation_handler.get_response(user_message)
+            # 调用AI对话处理器（获取完整响应数据）
+            response_data = await server.conversation_handler.get_response_with_commands(
+                user_message, 
+                enable_timing=True
+            )
             
-            # 发送AI回复
+            # 获取当前情感状态
+            emotional_state = server.conversation_handler.get_current_emotional_state()
+            
+            # 发送AI回复（使用前端期望的数据格式）
             await ws_manager.send_message(websocket, {
                 "type": "chat_response",
-                "data": response,
+                "data": {   
+                    "response": response_data.get("response", ""),
+                    "emotional_state": emotional_state,
+                    "commands": response_data.get("commands", []),
+                    "processing_time": None  # 可以添加处理时间统计
+                },
                 "timestamp": time.time()
             })
             
@@ -253,8 +293,9 @@ async def handle_chat_message(websocket: WebSocket, user_message: str):
             history_item = ChatHistoryItem(
                 id=str(uuid.uuid4()),
                 user_message=user_message,
-                ai_response=response,
-                timestamp=datetime.now()
+                ai_response=response_data.get("response", ""),
+                timestamp=datetime.now(),
+                emotional_state=emotional_state
             )
             
             server.chat_history.append(history_item)
@@ -267,14 +308,26 @@ async def handle_chat_message(websocket: WebSocket, user_message: str):
             logging.error(f"AI对话处理失败: {e}")
             await ws_manager.send_message(websocket, {
                 "type": "chat_response",
-                "data": "抱歉，我刚才走神了...能再说一遍吗？ 😅",
+                "data": {
+                    "response": "抱歉，我刚才走神了...能再说一遍吗？ 😅",
+                    "emotional_state": None,
+                    "commands": []
+                },
                 "timestamp": time.time()
             })
     else:
         # AI系统未初始化时的回复
         await ws_manager.send_message(websocket, {
             "type": "chat_response",
-            "data": "系统正在初始化中，请稍候再试。或者你可以通过设置页面配置API密钥后重启服务～",
+            "data": {
+                "response": "系统正在初始化中，请稍候再试。或者你可以通过设置页面配置API密钥后重启服务～",
+                "emotional_state": {
+                    "current_emotion": "neutral",
+                    "emotion_intensity": 0.5,
+                    "relationship_level": 1
+                },
+                "commands": []
+            },
             "timestamp": time.time()
         })
 
